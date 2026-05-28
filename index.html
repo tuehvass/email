@@ -243,6 +243,7 @@
   function parseAOP(tpl, values) {
     // Replace IF conditionals
     // {{IF|ARG|VAR|=|TEXT|MATCH|TEXT|TRUE_VAL|TEXT|FALSE_VAL}}
+    tpl = tpl.replace(/''/g, "'");
     tpl = tpl.replace(
       /\{\{IF\|ARG\|([A-Z0-9_]+)\|=\|TEXT\|([^|]*)\|TEXT\|([^|]*)\|TEXT\|([^}]*)\}\}/g,
       (_, varName, matchVal, trueVal, falseVal) => {
