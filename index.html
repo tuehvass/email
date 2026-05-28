@@ -11,24 +11,26 @@
     --bg: #0f0f11; --surface: #18181c; --surface2: #222228;
     --border: #2e2e38; --accent: #6c63ff; --accent2: #a78bfa;
     --text: #e8e8f0; --text2: #9090a8; --text3: #5a5a70;
-    --success: #34d399; --mono: 'JetBrains Mono', monospace;
-    --sans: 'DM Sans', sans-serif; --radius: 8px;
+    --success: #34d399; --danger: #f87171;
+    --mono: 'JetBrains Mono', monospace; --sans: 'DM Sans', sans-serif; --radius: 8px;
   }
-  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-  header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--surface); }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--surface); flex-shrink: 0; }
   header .logo { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: #fff; flex-shrink: 0; }
   header h1 { font-size: 15px; font-weight: 500; }
   header span { font-size: 13px; color: var(--text3); margin-left: auto; }
-  .workspace { display: grid; grid-template-columns: 1fr 280px 1fr; flex: 1; height: calc(100vh - 53px); overflow: hidden; }
-  .panel { display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; }
+  .workspace { display: grid; grid-template-columns: 1fr 280px 1fr; flex: 1; overflow: hidden; min-height: 0; }
+  .panel { display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; min-height: 0; }
   .panel:last-child { border-right: none; }
-  .panel-header { padding: 10px 14px; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 8px; }
+  .panel-header { padding: 10px 14px; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .panel-header .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-  .panel-body { flex: 1; overflow-y: auto; padding: 14px; }
-  textarea#template { width: 100%; height: 100%; background: transparent; border: none; outline: none; color: var(--text); font-family: var(--mono); font-size: 13px; line-height: 1.7; resize: none; caret-color: var(--accent2); }
+  .panel-body { flex: 1; overflow-y: auto; padding: 14px; min-height: 0; }
+  textarea#template { width: 100%; height: 100%; background: var(--bg); border: none; outline: none; color: var(--text); font-family: var(--mono); font-size: 12px; line-height: 1.7; resize: none; caret-color: var(--accent2); padding: 14px; display: block; }
   textarea#template::placeholder { color: var(--text3); }
   .var-list { display: flex; flex-direction: column; gap: 12px; }
-  .var-item label { display: block; font-size: 11px; color: var(--text3); margin-bottom: 5px; font-family: var(--mono); letter-spacing: 0.04em; }
+  .var-item label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); margin-bottom: 5px; font-family: var(--mono); letter-spacing: 0.04em; }
+  .var-item label .desc { font-size: 10px; color: var(--text3); opacity: 0.6; }
   .var-btn-group { display: flex; gap: 6px; }
   .var-btn { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 10px; color: var(--text2); font-size: 13px; font-family: var(--mono); cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
   .var-btn:hover { border-color: var(--accent); color: var(--text); }
@@ -36,12 +38,11 @@
   .var-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 10px; color: var(--text); font-size: 13px; font-family: var(--mono); outline: none; transition: border-color 0.15s; }
   .var-input:focus { border-color: var(--accent); }
   .empty-vars { color: var(--text3); font-size: 13px; text-align: center; padding: 2rem 1rem; line-height: 1.6; }
-  .preview-body { padding: 20px; overflow-y: auto; flex: 1; }
-  #preview-output { background: #fff; color: #222; border-radius: var(--radius); padding: 24px; min-height: 100px; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.7; }
-  #preview-output h1 { font-size: 22px; margin-bottom: 10px; }
-  #preview-output h2 { font-size: 18px; margin-bottom: 8px; }
-  #preview-output p { margin-bottom: 8px; }
-  .empty-preview { color: #aaa; font-size: 13px; font-style: italic; }
+  .unknown-vars { margin-top: 16px; padding: 10px 12px; background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3); border-radius: var(--radius); }
+  .unknown-vars .title { font-size: 11px; color: var(--danger); font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .unknown-var-item { font-size: 12px; font-family: var(--mono); color: var(--danger); padding: 2px 0; }
+  iframe#preview-frame { width: 100%; height: 100%; border: none; background: #fff; }
+  .preview-wrap { flex: 1; overflow: hidden; min-height: 0; display: flex; flex-direction: column; }
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -56,10 +57,11 @@
 <div class="workspace">
   <div class="panel">
     <div class="panel-header"><div class="dot"></div>Template</div>
-    <div class="panel-body" style="padding:0; display:flex; flex-direction:column;">
+    <div class="panel-body" style="padding:0; display:flex; flex-direction:column; min-height:0;">
       <textarea id="template" placeholder="Paste your mail template here..."></textarea>
     </div>
   </div>
+
   <div class="panel">
     <div class="panel-header"><div class="dot" style="background:var(--success)"></div>Variables</div>
     <div class="panel-body">
@@ -68,56 +70,58 @@
       </div>
     </div>
   </div>
+
   <div class="panel">
     <div class="panel-header"><div class="dot" style="background:var(--accent2)"></div>Preview</div>
-    <div class="preview-body">
-      <div id="preview-output"><span class="empty-preview">Preview will appear here...</span></div>
+    <div class="preview-wrap">
+      <iframe id="preview-frame" sandbox="allow-same-origin"></iframe>
     </div>
   </div>
 </div>
+
+<script src="variables.js"></script>
 <script>
   const templateEl = document.getElementById('template');
   const varList    = document.getElementById('var-list');
-  const preview    = document.getElementById('preview-output');
+  const frame      = document.getElementById('preview-frame');
   let vars = {};
-  let varMeta = {};
 
-  // Detect all variables and their types from the template
-  function analyseTemplate(tpl) {
-    const meta = {};
+  // Build a lookup from the definitions file
+  const VAR_LOOKUP = {};
+  VARIABLE_DEFINITIONS.forEach(v => { VAR_LOOKUP[v.name] = v; });
 
-    // IF conditions: {{IF|ARG|VARNAME|OP|TYPE|VAL|...}}
-    const ifRe = /\{\{IF\|ARG\|([A-Z0-9_]+)\|([!=<>]+)\|(NUMBER|TEXT)\|([^|]*)/g;
+  // Extract all variable names referenced in the template
+  function extractAllVarNames(tpl) {
+    const found = new Set();
+    // IF conditions: {{IF|ARG|VARNAME|...}}
+    const ifRe = /\{\{IF\|ARG\|([A-Z0-9_]+)\|/g;
     let m;
-    while ((m = ifRe.exec(tpl)) !== null) {
-      const name = m[1], op = m[2], type = m[3], val = m[4].trim();
-      if (!meta[name]) meta[name] = { type: 'unknown', ops: [] };
-      meta[name].ops.push({ op, type, val });
-      // If compared as NUMBER -> number input
-      if (type === 'NUMBER') meta[name].type = 'number';
-      // If compared as TEXT with = and val is 1 -> toggle
-      else if (type === 'TEXT' && op === '=' && val === '1' && meta[name].type !== 'number') meta[name].type = 'toggle';
-      else if (meta[name].type === 'unknown') meta[name].type = 'text';
-    }
-
-    // Inline args: {{ARG|VARNAME}} or {{VARNAME}}
+    while ((m = ifRe.exec(tpl)) !== null) found.add(m[1]);
+    // {{ARG|VARNAME}}
     const argRe = /\{\{ARG\|([A-Z0-9_]+)\}\}/g;
-    while ((m = argRe.exec(tpl)) !== null) {
-      if (!meta[m[1]]) meta[m[1]] = { type: 'text', ops: [] };
-    }
+    while ((m = argRe.exec(tpl)) !== null) found.add(m[1]);
+    // {{VARNAME}}
     const simpleRe = /\{\{([A-Z0-9_]+)\}\}/g;
     while ((m = simpleRe.exec(tpl)) !== null) {
-      if (!meta[m[1]]) meta[m[1]] = { type: 'text', ops: [] };
+      if (m[1] !== 'ARG' && m[1] !== 'IF') found.add(m[1]);
     }
-
-    return meta;
+    return found;
   }
 
-  // Evaluate a condition
+  // Decode mail engine special sequences
+  function decodeMail(tpl) {
+    // '||'&'||'nbsp; -> &nbsp;
+    tpl = tpl.replace(/'?\|\|'&'\|\|'(nbsp|amp|lt|gt|quot);/g, '&$1;');
+    // '' -> ' (escaped single quotes)
+    tpl = tpl.replace(/''/g, "'");
+    return tpl;
+  }
+
+  // Evaluate operator
   function evalCondition(actual, op, type, matchVal) {
     const a = type === 'NUMBER' ? parseFloat(actual) : actual.trim();
     const b = type === 'NUMBER' ? parseFloat(matchVal) : matchVal.trim();
-    switch (op) {
+    switch(op) {
       case '=':  return a == b;
       case '!=': return a != b;
       case '>':  return a > b;
@@ -128,35 +132,17 @@
     }
   }
 
-  // Parse one level of IF — handles nested by recursing
-  function parseOnce(tpl, values) {
-    // Replace ''  with ' (mail engine escaping)
-    tpl = tpl.replace(/''/g, "'");
-
-    // Replace {{ARG|VAR}} inline
-    tpl = tpl.replace(/\{\{ARG\|([A-Z0-9_]+)\}\}/g, (_, name) => values[name] !== undefined ? values[name] : '');
-
-    // Replace {{VAR}} simple substitution
-    tpl = tpl.replace(/\{\{([A-Z0-9_]+)\}\}/g, (_, name) => values[name] !== undefined ? values[name] : `<span style="color:#e74c3c">{{${name}}}</span>`);
-
-    return tpl;
-  }
-
-  // Recursively resolve nested IF statements
-  function resolveIFs(tpl, values) {
-    // Keep resolving until no more IF tags remain (handles nesting)
-    let prev = null;
-    let iterations = 0;
+  // Resolve IF statements - iterates to handle nesting
+  function resolveIFs(tpl, values, knownVars) {
+    let prev = null, iterations = 0;
     while (prev !== tpl && iterations < 20) {
       prev = tpl;
       tpl = tpl.replace(
         /\{\{IF\|ARG\|([A-Z0-9_]+)\|([!=<>]+)\|(NUMBER|TEXT)\|([^|]*)\|TEXT\|([^|]*)\|TEXT\|([^}]*)\}\}/g,
         (_, varName, op, type, matchVal, trueVal, falseVal) => {
           const actual = values[varName] !== undefined ? String(values[varName]) : '';
-          matchVal = matchVal.replace(/''/g, "'");
-          trueVal  = trueVal.replace(/''/g, "'");
-          falseVal = falseVal.replace(/''/g, "'");
-          return evalCondition(actual, op, type, matchVal) ? trueVal : falseVal;
+          const result = evalCondition(actual, op, type, matchVal) ? trueVal : falseVal;
+          return result;
         }
       );
       iterations++;
@@ -164,50 +150,75 @@
     return tpl;
   }
 
-  function parseTemplate(tpl, values) {
-    tpl = resolveIFs(tpl, values);
-    tpl = parseOnce(tpl, values);
+  // Resolve inline ARG and simple substitutions
+  function resolveArgs(tpl, values, knownVars) {
+    // {{ARG|VAR}}
+    tpl = tpl.replace(/\{\{ARG\|([A-Z0-9_]+)\}\}/g, (match, name) => {
+      if (knownVars.has(name)) return values[name] !== undefined ? values[name] : '';
+      return `<span style="background:#7f1d1d;color:#fca5a5;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px;">{{${name}}}</span>`;
+    });
+    // {{VAR}}
+    tpl = tpl.replace(/\{\{([A-Z0-9_]+)\}\}/g, (match, name) => {
+      if (name === 'ARG' || name === 'IF') return match;
+      if (knownVars.has(name)) return values[name] !== undefined ? values[name] : '';
+      return `<span style="background:#7f1d1d;color:#fca5a5;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px;">{{${name}}}</span>`;
+    });
     return tpl;
   }
 
-  // Load Google Fonts found in rendered output
+  function parseTemplate(tpl, values, knownVars) {
+    tpl = decodeMail(tpl);
+    tpl = resolveIFs(tpl, values, knownVars);
+    tpl = resolveArgs(tpl, values, knownVars);
+    return tpl;
+  }
+
+  // Load Google Fonts dynamically
   const loadedFonts = new Set();
   function ensureFonts(html) {
     ['Quicksand','Roboto','Open Sans','Lato','Montserrat','Oswald','Raleway','Nunito','Poppins'].forEach(font => {
       if (html.includes(font) && !loadedFonts.has(font)) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=' + font.replace(/ /g, '+') + ':wght@400;500;600&display=swap';
+        link.href = 'https://fonts.googleapis.com/css2?family=' + font.replace(/ /g,'+') + ':wght@400;500;600&display=swap';
         document.head.appendChild(link);
+        // Also inject into iframe
+        const ilink = frame.contentDocument.createElement('link');
+        ilink.rel = 'stylesheet';
+        ilink.href = link.href;
+        frame.contentDocument.head.appendChild(ilink);
         loadedFonts.add(font);
       }
     });
   }
 
-  function renderVars(meta) {
-    const names = Object.keys(meta);
-    if (names.length === 0) {
+  function renderVars(allVarNames) {
+    const knownInTemplate  = [...allVarNames].filter(n => VAR_LOOKUP[n]);
+    const unknownInTemplate = [...allVarNames].filter(n => !VAR_LOOKUP[n]);
+
+    // Preserve existing values
+    const newVars = {};
+    knownInTemplate.forEach(n => {
+      newVars[n] = vars[n] !== undefined ? vars[n] : (VAR_LOOKUP[n].type === 'toggle' ? '0' : '');
+    });
+    vars = newVars;
+
+    varList.innerHTML = '';
+
+    if (knownInTemplate.length === 0 && unknownInTemplate.length === 0) {
       varList.innerHTML = '<div class="empty-vars">No variables found<br>in template</div>';
       return;
     }
 
-    // Preserve existing values
-    const newVars = {};
-    names.forEach(n => {
-      newVars[n] = vars[n] !== undefined ? vars[n] : (meta[n].type === 'toggle' ? '0' : '');
-    });
-    vars = newVars;
-    varMeta = meta;
-
-    varList.innerHTML = '';
-    names.forEach(name => {
-      const t = meta[name].type;
+    // Render known variables
+    knownInTemplate.forEach(name => {
+      const def = VAR_LOOKUP[name];
       const item = document.createElement('div');
       item.className = 'var-item';
+      const labelHtml = `<label>${name} <span class="desc">${def.description}</span></label>`;
 
-      if (t === 'toggle') {
-        item.innerHTML = `
-          <label>${name}</label>
+      if (def.type === 'toggle') {
+        item.innerHTML = labelHtml + `
           <div class="var-btn-group">
             <button class="var-btn ${vars[name] === '1' ? 'active' : ''}" data-var="${name}" data-val="1">1</button>
             <button class="var-btn ${vars[name] !== '1' ? 'active' : ''}" data-var="${name}" data-val="0">Other</button>
@@ -217,40 +228,54 @@
             vars[name] = e.target.dataset.val;
             item.querySelectorAll('.var-btn').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
-            renderPreview();
+            renderPreview(allVarNames);
           });
         });
-      } else if (t === 'number') {
-        item.innerHTML = `<label>${name}</label><input class="var-input" type="number" step="1" data-var="${name}" value="${vars[name]}" placeholder="0">`;
-        item.querySelector('input').addEventListener('input', e => {
-          vars[name] = e.target.value;
-          renderPreview();
-        });
+      } else if (def.type === 'number') {
+        item.innerHTML = labelHtml + `<input class="var-input" type="number" step="1" data-var="${name}" value="${vars[name]}" placeholder="0">`;
+        item.querySelector('input').addEventListener('input', e => { vars[name] = e.target.value; renderPreview(allVarNames); });
       } else {
-        item.innerHTML = `<label>${name}</label><input class="var-input" type="text" data-var="${name}" value="${vars[name]}" placeholder="value...">`;
-        item.querySelector('input').addEventListener('input', e => {
-          vars[name] = e.target.value;
-          renderPreview();
-        });
+        item.innerHTML = labelHtml + `<input class="var-input" type="text" data-var="${name}" value="${vars[name]}" placeholder="value...">`;
+        item.querySelector('input').addEventListener('input', e => { vars[name] = e.target.value; renderPreview(allVarNames); });
       }
       varList.appendChild(item);
     });
+
+    // Render unknown variables warning
+    if (unknownInTemplate.length > 0) {
+      const box = document.createElement('div');
+      box.className = 'unknown-vars';
+      box.innerHTML = `<div class="title">⚠ Not in variable list</div>` +
+        unknownInTemplate.map(n => `<div class="unknown-var-item">{{${n}}}</div>`).join('');
+      varList.appendChild(box);
+    }
   }
 
-  function renderPreview() {
+  function renderPreview(allVarNames) {
     const tpl = templateEl.value.trim();
-    if (!tpl) { preview.innerHTML = '<span class="empty-preview">Preview will appear here...</span>'; return; }
-    const rendered = parseTemplate(tpl, vars);
+    const knownVars = new Set([...allVarNames].filter(n => VAR_LOOKUP[n]));
+    if (!tpl) {
+      frame.contentDocument.body.innerHTML = '<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>';
+      return;
+    }
+    const rendered = parseTemplate(tpl, vars, knownVars);
     ensureFonts(rendered);
-    preview.innerHTML = rendered;
+    frame.contentDocument.open();
+    frame.contentDocument.write(rendered);
+    frame.contentDocument.close();
   }
 
   function update() {
     const tpl = templateEl.value;
-    const meta = analyseTemplate(tpl);
-    renderVars(meta);
-    renderPreview();
+    const allVarNames = extractAllVarNames(tpl);
+    renderVars(allVarNames);
+    renderPreview(allVarNames);
   }
+
+  // Init iframe
+  frame.contentDocument.open();
+  frame.contentDocument.write('<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>');
+  frame.contentDocument.close();
 
   templateEl.addEventListener('input', update);
 </script>
