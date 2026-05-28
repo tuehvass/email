@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AOP Template Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f11;
+    --surface: #18181c;
+    --surface2: #222228;
+    --border: #2e2e38;
+    --accent: #6c63ff;
+    --accent2: #a78bfa;
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --text3: #5a5a70;
+    --success: #34d399;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --radius: 8px;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+  }
+
+  header .logo {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 500; color: #fff;
+    flex-shrink: 0;
+  }
+
+  header h1 { font-size: 15px; font-weight: 500; color: var(--text); }
+  header span { font-size: 13px; color: var(--text3); margin-left: auto; }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: 1fr 260px 1fr;
+    flex: 1;
+    overflow: hidden;
+    height: calc(100vh - 53px);
+  }
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .panel:last-child { border-right: none; }
+
+  .panel-header {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-header .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+  }
+
+  textarea#template {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    resize: none;
+    caret-color: var(--accent2);
+  }
+
+  textarea#template::placeholder { color: var(--text3); }
+
+  .var-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .var-item label {
+    display: block;
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 4px;
+    font-family: var(--mono);
+  }
+
+  .var-item input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 7px 10px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--mono);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .var-item input:focus { border-color: var(--accent); }
+
+  .empty-vars {
+    color: var(--text3);
+    font-size: 13px;
+    text-align: center;
+    padding: 2rem 1rem;
+    line-height: 1.6;
+  }
+
+  .preview-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  #preview-output {
+    background: #fff;
+    color: #222;
+    border-radius: var(--radius);
+    padding: 24px;
+    min-height: 100px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  #preview-output h1 { font-size: 22px; margin-bottom: 10px; }
+  #preview-output h2 { font-size: 18px; margin-bottom: 8px; }
+  #preview-output p  { margin-bottom: 8px; }
+
+  .empty-preview {
+    color: #aaa;
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">A</div>
+  <h1>AOP Template Preview</h1>
+  <span>client-side only · no data sent anywhere</span>
+</header>
+
+<div class="workspace">
+
+  <div class="panel">
+    <div class="panel-header"><div class="dot"></div>Template</div>
+    <div class="panel-body" style="padding:0; display:flex; flex-direction:column;">
+      <textarea id="template" placeholder="Paste your AOP template here...&#10;&#10;Example:&#10;&lt;div style=&quot;font-family:{{IF|ARG|CUST_BROKER|=|TEXT|1|TEXT|'Quicksand',Arial|TEXT|Arial}}&quot;&gt;&#10;  &lt;h1&gt;Hello {{CUST_NAME}}&lt;/h1&gt;&#10;&lt;/div&gt;"></textarea>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><div class="dot" style="background:var(--success)"></div>Variables</div>
+    <div class="panel-body">
+      <div class="var-list" id="var-list">
+        <div class="empty-vars">Paste a template<br>to see variables</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><div class="dot" style="background:var(--accent2)"></div>Preview</div>
+    <div class="preview-body">
+      <div id="preview-output"><span class="empty-preview">Preview will appear here...</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const templateEl = document.getElementById('template');
+  const varList    = document.getElementById('var-list');
+  const preview    = document.getElementById('preview-output');
+
+  let vars = {};
+
+  function extractVars(tpl) {
+    const found = new Set();
+    // Simple {{VAR}} substitutions
+    const simpleRe = /\{\{([A-Z0-9_]+)\}\}/g;
+    let m;
+    while ((m = simpleRe.exec(tpl)) !== null) found.add(m[1]);
+    // IF blocks: {{IF|ARG|VARNAME|...}}
+    const ifRe = /\{\{IF\|ARG\|([A-Z0-9_]+)\|/g;
+    while ((m = ifRe.exec(tpl)) !== null) found.add(m[1]);
+    return [...found];
+  }
+
+  function parseAOP(tpl, values) {
+    // Replace IF conditionals
+    // {{IF|ARG|VAR|=|TEXT|MATCH|TEXT|TRUE_VAL|TEXT|FALSE_VAL}}
+    tpl = tpl.replace(
+      /\{\{IF\|ARG\|([A-Z0-9_]+)\|=\|TEXT\|([^|]*)\|TEXT\|([^|]*)\|TEXT\|([^}]*)\}\}/g,
+      (_, varName, matchVal, trueVal, falseVal) => {
+        const actual = (values[varName] || '').trim();
+        return actual === matchVal.trim() ? trueVal : falseVal;
+      }
+    );
+    // Replace simple {{VAR}}
+    tpl = tpl.replace(/\{\{([A-Z0-9_]+)\}\}/g, (_, varName) => {
+      return values[varName] !== undefined ? values[varName] : `<span style="color:#e74c3c">{{${varName}}}</span>`;
+    });
+    return tpl;
+  }
+
+  function renderVars(names) {
+    if (names.length === 0) {
+      varList.innerHTML = '<div class="empty-vars">No variables found<br>in template</div>';
+      return;
+    }
+    // Keep existing values for vars that persist
+    const newVars = {};
+    names.forEach(n => { newVars[n] = vars[n] !== undefined ? vars[n] : ''; });
+    vars = newVars;
+
+    varList.innerHTML = '';
+    names.forEach(name => {
+      const item = document.createElement('div');
+      item.className = 'var-item';
+      item.innerHTML = `<label>${name}</label><input type="text" data-var="${name}" value="${vars[name]}" placeholder="value...">`;
+      varList.appendChild(item);
+    });
+
+    varList.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', e => {
+        vars[e.target.dataset.var] = e.target.value;
+        renderPreview();
+      });
+    });
+  }
+
+  function renderPreview() {
+    const tpl = templateEl.value.trim();
+    if (!tpl) {
+      preview.innerHTML = '<span class="empty-preview">Preview will appear here...</span>';
+      return;
+    }
+    preview.innerHTML = parseAOP(tpl, vars);
+  }
+
+  function update() {
+    const tpl = templateEl.value;
+    const names = extractVars(tpl);
+    renderVars(names);
+    renderPreview();
+  }
+
+  templateEl.addEventListener('input', update);
+</script>
+</body>
+</html>
