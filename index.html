@@ -14,7 +14,6 @@
     --success: #34d399; --danger: #f87171;
     --mono: 'JetBrains Mono', monospace; --sans: 'DM Sans', sans-serif; --radius: 8px;
   }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: var(--sans); background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
   header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--surface); flex-shrink: 0; }
   header .logo { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: #fff; flex-shrink: 0; }
@@ -61,7 +60,6 @@
       <textarea id="template" placeholder="Paste your mail template here..."></textarea>
     </div>
   </div>
-
   <div class="panel">
     <div class="panel-header"><div class="dot" style="background:var(--success)"></div>Variables</div>
     <div class="panel-body">
@@ -70,7 +68,6 @@
       </div>
     </div>
   </div>
-
   <div class="panel">
     <div class="panel-header"><div class="dot" style="background:var(--accent2)"></div>Preview</div>
     <div class="preview-wrap">
@@ -86,38 +83,56 @@
   const frame      = document.getElementById('preview-frame');
   let vars = {};
 
-  // Build a lookup from the definitions file
   const VAR_LOOKUP = {};
   VARIABLE_DEFINITIONS.forEach(v => { VAR_LOOKUP[v.name] = v; });
 
-  // Extract all variable names referenced in the template
-  function extractAllVarNames(tpl) {
-    const found = new Set();
-    // IF conditions: {{IF|ARG|VARNAME|...}}
-    const ifRe = /\{\{IF\|ARG\|([A-Z0-9_]+)\|/g;
-    let m;
-    while ((m = ifRe.exec(tpl)) !== null) found.add(m[1]);
-    // {{ARG|VARNAME}}
-    const argRe = /\{\{ARG\|([A-Z0-9_]+)\}\}/g;
-    while ((m = argRe.exec(tpl)) !== null) found.add(m[1]);
-    // {{VARNAME}}
-    const simpleRe = /\{\{([A-Z0-9_]+)\}\}/g;
-    while ((m = simpleRe.exec(tpl)) !== null) {
-      if (m[1] !== 'ARG' && m[1] !== 'IF') found.add(m[1]);
+  // ─── TOKENIZER ───────────────────────────────────────────────────────────────
+  // Splits a string into text segments and {{...}} tag segments,
+  // correctly handling nesting by counting {{ and }}
+  function tokenize(src) {
+    const tokens = [];
+    let i = 0;
+    while (i < src.length) {
+      const start = src.indexOf('{{', i);
+      if (start === -1) { tokens.push({ type: 'text', value: src.slice(i) }); break; }
+      if (start > i) tokens.push({ type: 'text', value: src.slice(i, start) });
+      // Find matching closing }} accounting for nesting
+      let depth = 1, j = start + 2;
+      while (j < src.length && depth > 0) {
+        if (src[j] === '{' && src[j+1] === '{') { depth++; j += 2; }
+        else if (src[j] === '}' && src[j+1] === '}') { depth--; j += 2; }
+        else j++;
+      }
+      tokens.push({ type: 'tag', value: src.slice(start + 2, j - 2) });
+      i = j;
     }
-    return found;
+    return tokens;
   }
 
-  // Decode mail engine special sequences
-  function decodeMail(tpl) {
-    // '||'&'||'nbsp; -> &nbsp;
-    tpl = tpl.replace(/'?\|\|'&'\|\|'(nbsp|amp|lt|gt|quot);/g, '&$1;');
+  // ─── SPLIT TAG CONTENT BY | respecting nested {{ }} ─────────────────────────
+  function splitParts(inner) {
+    const parts = [];
+    let current = '', depth = 0, i = 0;
+    while (i < inner.length) {
+      if (inner[i] === '{' && inner[i+1] === '{') { depth++; current += '{{'; i += 2; }
+      else if (inner[i] === '}' && inner[i+1] === '}') { depth--; current += '}}'; i += 2; }
+      else if (inner[i] === '|' && depth === 0) { parts.push(current); current = ''; i++; }
+      else { current += inner[i]; i++; }
+    }
+    parts.push(current);
+    return parts;
+  }
+
+  // ─── DECODE MAIL ENGINE ESCAPING ────────────────────────────────────────────
+  function decodeMail(src) {
+    // '||'&'||'entity; -> &entity;  (handles nbsp, bull, amp, lt, gt, quot, mdash, ndash, hellip etc.)
+    src = src.replace(/'?\|\|'&'\|\|'([a-zA-Z0-9#]+);/g, '&$1;');
     // '' -> ' (escaped single quotes)
-    tpl = tpl.replace(/''/g, "'");
-    return tpl;
+    src = src.replace(/''/g, "'");
+    return src;
   }
 
-  // Evaluate operator
+  // ─── EVALUATE CONDITION ──────────────────────────────────────────────────────
   function evalCondition(actual, op, type, matchVal) {
     const a = type === 'NUMBER' ? parseFloat(actual) : actual.trim();
     const b = type === 'NUMBER' ? parseFloat(matchVal) : matchVal.trim();
@@ -132,152 +147,187 @@
     }
   }
 
-  // Resolve IF statements - iterates to handle nesting
-  function resolveIFs(tpl, values, knownVars) {
-    let prev = null, iterations = 0;
-    while (prev !== tpl && iterations < 20) {
-      prev = tpl;
-      tpl = tpl.replace(
-        /\{\{IF\|ARG\|([A-Z0-9_]+)\|([!=<>]+)\|(NUMBER|TEXT)\|([^|]*)\|TEXT\|([^|]*)\|TEXT\|([^}]*)\}\}/g,
-        (_, varName, op, type, matchVal, trueVal, falseVal) => {
-          const actual = values[varName] !== undefined ? String(values[varName]) : '';
-          const result = evalCondition(actual, op, type, matchVal) ? trueVal : falseVal;
-          return result;
+  // ─── MAIN RECURSIVE EVALUATOR ────────────────────────────────────────────────
+  function evaluate(src, values, unknowns) {
+    const tokens = tokenize(src);
+    let result = '';
+
+    for (const token of tokens) {
+      if (token.type === 'text') {
+        result += token.value;
+        continue;
+      }
+
+      const parts = splitParts(token.value);
+      const cmd = parts[0].trim();
+
+      // IF|ARG|VARNAME|OP|TYPE|MATCHVAL|TEXT|TRUEVAL|TEXT|FALSEVAL
+      if (cmd === 'IF' && parts[1] === 'ARG') {
+        const varName  = parts[2];
+        const op       = parts[3];
+        const type     = parts[4];
+        const matchVal = parts[5];
+        // parts[6] should be 'TEXT', parts[7] = trueVal, parts[8] = 'TEXT', parts[9] = falseVal
+        const trueVal  = parts[7] || '';
+        const falseVal = parts[9] || '';
+        const actual   = values[varName] !== undefined ? String(values[varName]) : '';
+        const branch   = evalCondition(actual, op, type, matchVal) ? trueVal : falseVal;
+        // Recursively evaluate the chosen branch (handles nested tags inside)
+        result += evaluate(branch, values, unknowns);
+        continue;
+      }
+
+      // ARG|VAR1|ARG|VAR2|ARG|VAR3 — fallback chain: use first that has a value
+      if (cmd === 'ARG') {
+        let resolved = null;
+        // Walk through ARG|NAME pairs
+        for (let k = 0; k < parts.length - 1; k += 2) {
+          if (parts[k].trim() === 'ARG') {
+            const name = parts[k+1].trim();
+            if (!VAR_LOOKUP[name]) unknowns.add(name);
+            if (values[name] !== undefined && values[name] !== '') {
+              resolved = values[name]; break;
+            }
+          }
         }
-      );
-      iterations++;
+        if (resolved !== null) { result += resolved; continue; }
+        // Nothing resolved — show last ARG name as red flag
+        const lastName = parts[parts.length - 1].trim();
+        if (!VAR_LOOKUP[lastName]) unknowns.add(lastName);
+        result += `<span style="background:#7f1d1d;color:#fca5a5;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px;">{{ARG|${lastName}}}</span>`;
+        continue;
+      }
+
+      // Simple {{VARNAME}}
+      const name = cmd;
+      if (values[name] !== undefined) { result += values[name]; continue; }
+      if (!VAR_LOOKUP[name]) unknowns.add(name);
+      result += `<span style="background:#7f1d1d;color:#fca5a5;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px;">{{${name}}}</span>`;
     }
-    return tpl;
+
+    return result;
   }
 
-  // Resolve inline ARG and simple substitutions
-  function resolveArgs(tpl, values, knownVars) {
-    // {{ARG|VAR}}
-    tpl = tpl.replace(/\{\{ARG\|([A-Z0-9_]+)\}\}/g, (match, name) => {
-      if (knownVars.has(name)) return values[name] !== undefined ? values[name] : '';
-      return `<span style="background:#7f1d1d;color:#fca5a5;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px;">{{${name}}}</span>`;
-    });
-    // {{VAR}}
-    tpl = tpl.replace(/\{\{([A-Z0-9_]+)\}\}/g, (match, name) => {
-      if (name === 'ARG' || name === 'IF') return match;
-      if (knownVars.has(name)) return values[name] !== undefined ? values[name] : '';
-      return `<span style="background:#7f1d1d;color:#fca5a5;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px;">{{${name}}}</span>`;
-    });
-    return tpl;
+  // ─── EXTRACT ALL VAR NAMES FROM TEMPLATE ─────────────────────────────────────
+  function extractAllVarNames(src) {
+    const found = new Set();
+    // Scan for ARG references and IF conditions
+    const re = /\{\{(?:IF\|ARG\||ARG\|)([A-Z0-9_]+)/g;
+    let m;
+    while ((m = re.exec(src)) !== null) found.add(m[1]);
+    // Simple {{VARNAME}}
+    const re2 = /\{\{([A-Z0-9_]+)\}\}/g;
+    while ((m = re2.exec(src)) !== null) {
+      if (m[1] !== 'ARG' && m[1] !== 'IF' && m[1] !== 'TEXT' && m[1] !== 'NUMBER') found.add(m[1]);
+    }
+    return found;
   }
 
-  function parseTemplate(tpl, values, knownVars) {
-    tpl = decodeMail(tpl);
-    tpl = resolveIFs(tpl, values, knownVars);
-    tpl = resolveArgs(tpl, values, knownVars);
-    return tpl;
-  }
-
-  // Load Google Fonts dynamically
+  // ─── FONT LOADER ─────────────────────────────────────────────────────────────
   const loadedFonts = new Set();
   function ensureFonts(html) {
     ['Quicksand','Roboto','Open Sans','Lato','Montserrat','Oswald','Raleway','Nunito','Poppins'].forEach(font => {
       if (html.includes(font) && !loadedFonts.has(font)) {
+        const href = 'https://fonts.googleapis.com/css2?family=' + font.replace(/ /g,'+') + ':wght@400;500;600&display=swap';
         const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=' + font.replace(/ /g,'+') + ':wght@400;500;600&display=swap';
+        link.rel = 'stylesheet'; link.href = href;
         document.head.appendChild(link);
-        // Also inject into iframe
-        const ilink = frame.contentDocument.createElement('link');
-        ilink.rel = 'stylesheet';
-        ilink.href = link.href;
-        frame.contentDocument.head.appendChild(ilink);
+        try {
+          const ilink = frame.contentDocument.createElement('link');
+          ilink.rel = 'stylesheet'; ilink.href = href;
+          frame.contentDocument.head.appendChild(ilink);
+        } catch(e) {}
         loadedFonts.add(font);
       }
     });
   }
 
+  // ─── RENDER VARIABLES PANEL ──────────────────────────────────────────────────
   function renderVars(allVarNames) {
-    const knownInTemplate  = [...allVarNames].filter(n => VAR_LOOKUP[n]);
-    const unknownInTemplate = [...allVarNames].filter(n => !VAR_LOOKUP[n]);
+    const known   = [...allVarNames].filter(n => VAR_LOOKUP[n]);
+    const unknown = [...allVarNames].filter(n => !VAR_LOOKUP[n]);
 
-    // Preserve existing values
     const newVars = {};
-    knownInTemplate.forEach(n => {
-      newVars[n] = vars[n] !== undefined ? vars[n] : (VAR_LOOKUP[n].type === 'toggle' ? '0' : '');
-    });
+    known.forEach(n => { newVars[n] = vars[n] !== undefined ? vars[n] : (VAR_LOOKUP[n].type === 'toggle' ? '0' : ''); });
     vars = newVars;
 
     varList.innerHTML = '';
 
-    if (knownInTemplate.length === 0 && unknownInTemplate.length === 0) {
+    if (known.length === 0 && unknown.length === 0) {
       varList.innerHTML = '<div class="empty-vars">No variables found<br>in template</div>';
       return;
     }
 
-    // Render known variables
-    knownInTemplate.forEach(name => {
+    known.forEach(name => {
       const def = VAR_LOOKUP[name];
       const item = document.createElement('div');
       item.className = 'var-item';
       const labelHtml = `<label>${name} <span class="desc">${def.description}</span></label>`;
 
       if (def.type === 'toggle') {
-        item.innerHTML = labelHtml + `
-          <div class="var-btn-group">
-            <button class="var-btn ${vars[name] === '1' ? 'active' : ''}" data-var="${name}" data-val="1">1</button>
-            <button class="var-btn ${vars[name] !== '1' ? 'active' : ''}" data-var="${name}" data-val="0">Other</button>
-          </div>`;
+        item.innerHTML = labelHtml + `<div class="var-btn-group">
+          <button class="var-btn ${vars[name] === '1' ? 'active' : ''}" data-var="${name}" data-val="1">1</button>
+          <button class="var-btn ${vars[name] !== '1' ? 'active' : ''}" data-var="${name}" data-val="0">Other</button>
+        </div>`;
         item.querySelectorAll('.var-btn').forEach(btn => {
           btn.addEventListener('click', e => {
             vars[name] = e.target.dataset.val;
             item.querySelectorAll('.var-btn').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
-            renderPreview(allVarNames);
+            update(false);
           });
         });
       } else if (def.type === 'number') {
         item.innerHTML = labelHtml + `<input class="var-input" type="number" step="1" data-var="${name}" value="${vars[name]}" placeholder="0">`;
-        item.querySelector('input').addEventListener('input', e => { vars[name] = e.target.value; renderPreview(allVarNames); });
+        item.querySelector('input').addEventListener('input', e => { vars[name] = e.target.value; update(false); });
       } else {
         item.innerHTML = labelHtml + `<input class="var-input" type="text" data-var="${name}" value="${vars[name]}" placeholder="value...">`;
-        item.querySelector('input').addEventListener('input', e => { vars[name] = e.target.value; renderPreview(allVarNames); });
+        item.querySelector('input').addEventListener('input', e => { vars[name] = e.target.value; update(false); });
       }
       varList.appendChild(item);
     });
 
-    // Render unknown variables warning
-    if (unknownInTemplate.length > 0) {
+    if (unknown.length > 0) {
       const box = document.createElement('div');
       box.className = 'unknown-vars';
       box.innerHTML = `<div class="title">⚠ Not in variable list</div>` +
-        unknownInTemplate.map(n => `<div class="unknown-var-item">{{${n}}}</div>`).join('');
+        unknown.map(n => `<div class="unknown-var-item">{{${n}}}</div>`).join('');
       varList.appendChild(box);
     }
   }
 
+  // ─── RENDER PREVIEW ──────────────────────────────────────────────────────────
   function renderPreview(allVarNames) {
     const tpl = templateEl.value.trim();
-    const knownVars = new Set([...allVarNames].filter(n => VAR_LOOKUP[n]));
     if (!tpl) {
-      frame.contentDocument.body.innerHTML = '<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>';
+      frame.contentDocument.open();
+      frame.contentDocument.write('<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>');
+      frame.contentDocument.close();
       return;
     }
-    const rendered = parseTemplate(tpl, vars, knownVars);
+    const unknowns = new Set();
+    const decoded  = decodeMail(tpl);
+    const rendered = evaluate(decoded, vars, unknowns);
     ensureFonts(rendered);
     frame.contentDocument.open();
     frame.contentDocument.write(rendered);
     frame.contentDocument.close();
   }
 
-  function update() {
+  // ─── MAIN UPDATE ─────────────────────────────────────────────────────────────
+  function update(rebuildVars = true) {
     const tpl = templateEl.value;
     const allVarNames = extractAllVarNames(tpl);
-    renderVars(allVarNames);
+    if (rebuildVars) renderVars(allVarNames);
     renderPreview(allVarNames);
   }
 
-  // Init iframe
+  // Init
   frame.contentDocument.open();
   frame.contentDocument.write('<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>');
   frame.contentDocument.close();
 
-  templateEl.addEventListener('input', update);
+  templateEl.addEventListener('input', () => update(true));
 </script>
 </body>
 </html>
