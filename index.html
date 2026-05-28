@@ -119,24 +119,32 @@
     display: block;
     font-size: 11px;
     color: var(--text3);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     font-family: var(--mono);
   }
 
-  .var-item input {
-    width: 100%;
+  .var-btn-group { display: flex; gap: 6px; }
+
+  .var-btn {
+    flex: 1;
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 7px 10px;
-    color: var(--text);
+    color: var(--text2);
     font-size: 13px;
     font-family: var(--mono);
-    outline: none;
-    transition: border-color 0.15s;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
 
-  .var-item input:focus { border-color: var(--accent); }
+  .var-btn:hover { border-color: var(--accent); color: var(--text); }
+
+  .var-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
 
   .empty-vars {
     color: var(--text3);
@@ -254,24 +262,46 @@
       varList.innerHTML = '<div class="empty-vars">No variables found<br>in template</div>';
       return;
     }
-    // Keep existing values for vars that persist
     const newVars = {};
-    names.forEach(n => { newVars[n] = vars[n] !== undefined ? vars[n] : ''; });
+    names.forEach(n => { newVars[n] = vars[n] !== undefined ? vars[n] : '0'; });
     vars = newVars;
 
     varList.innerHTML = '';
     names.forEach(name => {
       const item = document.createElement('div');
       item.className = 'var-item';
-      item.innerHTML = `<label>${name}</label><input type="text" data-var="${name}" value="${vars[name]}" placeholder="value...">`;
+      item.innerHTML = `
+        <label>${name}</label>
+        <div class="var-btn-group">
+          <button class="var-btn ${vars[name] === '1' ? 'active' : ''}" data-var="${name}" data-val="1">1</button>
+          <button class="var-btn ${vars[name] !== '1' ? 'active' : ''}" data-var="${name}" data-val="0">Other</button>
+        </div>`;
       varList.appendChild(item);
     });
 
-    varList.querySelectorAll('input').forEach(inp => {
-      inp.addEventListener('input', e => {
-        vars[e.target.dataset.var] = e.target.value;
+    varList.querySelectorAll('.var-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const name = e.target.dataset.var;
+        const val = e.target.dataset.val;
+        vars[name] = val;
+        varList.querySelectorAll(`.var-btn[data-var="${name}"]`).forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
         renderPreview();
       });
+    });
+  }
+
+  const loadedFonts = new Set();
+  function ensureFonts(html) {
+    const knownFonts = ['Quicksand','Roboto','Open Sans','Lato','Montserrat','Oswald','Raleway','Nunito','Poppins'];
+    knownFonts.forEach(font => {
+      if (html.includes(font) && !loadedFonts.has(font)) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=' + font.replace(/ /g,'+') + ':wght@400;500;600&display=swap';
+        document.head.appendChild(link);
+        loadedFonts.add(font);
+      }
     });
   }
 
@@ -281,7 +311,9 @@
       preview.innerHTML = '<span class="empty-preview">Preview will appear here...</span>';
       return;
     }
-    preview.innerHTML = parseAOP(tpl, vars);
+    const rendered = parseAOP(tpl, vars);
+    ensureFonts(rendered);
+    preview.innerHTML = rendered;
   }
 
   function update() {
