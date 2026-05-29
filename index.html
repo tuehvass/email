@@ -19,7 +19,6 @@
   header .logo { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: #fff; flex-shrink: 0; }
   header h1 { font-size: 15px; font-weight: 500; }
   header span { font-size: 13px; color: var(--text3); margin-left: auto; }
-
   .workspace { display: grid; grid-template-columns: 1fr 5px 280px 5px 1fr; flex: 1; overflow: hidden; min-height: 0; }
   .panel { display: flex; flex-direction: column; overflow: hidden; min-height: 0; min-width: 80px; }
   .divider { background: var(--border); cursor: col-resize; transition: background 0.15s; position: relative; }
@@ -28,10 +27,8 @@
   .panel-header { padding: 8px 14px; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .panel-header .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
   .panel-body { flex: 1; overflow-y: auto; padding: 14px; min-height: 0; }
-
   textarea#template { width: 100%; height: 100%; background: var(--bg); border: none; outline: none; color: var(--text); font-family: var(--mono); font-size: 12px; line-height: 1.7; resize: none; caret-color: var(--accent2); padding: 14px; display: block; }
   textarea#template::placeholder { color: var(--text3); }
-
   .var-list { display: flex; flex-direction: column; gap: 12px; }
   .var-item label { display: flex; align-items: baseline; gap: 6px; font-size: 12px; color: var(--text2); margin-bottom: 5px; font-family: var(--mono); letter-spacing: 0.03em; font-weight: 500; }
   .var-item label .desc { font-size: 10px; color: var(--text3); font-weight: 400; }
@@ -45,10 +42,7 @@
   .unknown-vars { margin-top: 16px; padding: 10px 12px; background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3); border-radius: var(--radius); }
   .unknown-vars .title { font-size: 11px; color: var(--danger); font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
   .unknown-var-item { font-size: 12px; font-family: var(--mono); color: var(--danger); padding: 2px 0; }
-
-  /* Right panel: meta on top, email below */
   .preview-panel { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
-
   .meta-block { flex-shrink: 0; border-bottom: 1px solid var(--border); overflow-y: auto; max-height: 42%; }
   .meta-rows { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
   .meta-row { display: flex; flex-direction: column; gap: 3px; }
@@ -57,10 +51,8 @@
   .meta-value.name { font-size: 14px; color: var(--text); font-weight: 600; font-family: var(--sans); }
   .meta-value.note { color: var(--text3); font-style: italic; font-family: var(--sans); }
   .meta-value.prose { font-family: var(--sans); line-height: 1.6; color: var(--text2); }
-
   .email-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
   iframe#preview-frame { width: 100%; height: 100%; border: none; background: #fff; flex: 1; }
-
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -72,19 +64,14 @@
   <h1>Mail Template Preview</h1>
   <span>client-side only · no data sent anywhere</span>
 </header>
-
 <div class="workspace">
-  <!-- LEFT: Template -->
   <div class="panel" id="panel-left">
     <div class="panel-header"><div class="dot"></div>Template</div>
     <div class="panel-body" style="padding:0;display:flex;flex-direction:column;min-height:0;">
       <textarea id="template" placeholder="Paste your mail template here..."></textarea>
     </div>
   </div>
-
   <div class="divider" id="div1"></div>
-
-  <!-- MIDDLE: Variables -->
   <div class="panel" id="panel-mid">
     <div class="panel-header"><div class="dot" style="background:var(--success)"></div>Variables</div>
     <div class="panel-body">
@@ -93,57 +80,29 @@
       </div>
     </div>
   </div>
-
   <div class="divider" id="div2"></div>
-
-  <!-- RIGHT: Setup + Email preview -->
   <div class="panel preview-panel" id="panel-right">
-
     <div class="meta-block" id="meta-block" style="display:none;">
       <div class="panel-header" style="border-bottom:1px solid var(--border);">
         <div class="dot" style="background:var(--warn)"></div>Template Setup
       </div>
       <div class="meta-rows">
-        <div class="meta-row">
-          <div class="meta-label">Template Name</div>
-          <div class="meta-value name" id="meta-name"></div>
-        </div>
-        <div class="meta-row">
-          <div class="meta-label">Sender Email</div>
-          <div class="meta-value" id="meta-sender"></div>
-        </div>
-        <div class="meta-row">
-          <div class="meta-label">Internal Note</div>
-          <div class="meta-value note" id="meta-note"></div>
-        </div>
-        <div class="meta-row">
-          <div class="meta-label">Email Subject</div>
-          <div class="meta-value prose" id="meta-subject"></div>
-        </div>
-        <div class="meta-row">
-          <div class="meta-label">Internal Text</div>
-          <div class="meta-value prose" id="meta-internal"></div>
-        </div>
+        <div class="meta-row"><div class="meta-label">Template Name</div><div class="meta-value name" id="meta-name"></div></div>
+        <div class="meta-row"><div class="meta-label">Sender Email</div><div class="meta-value" id="meta-sender"></div></div>
+        <div class="meta-row"><div class="meta-label">Internal Note</div><div class="meta-value note" id="meta-note"></div></div>
+        <div class="meta-row"><div class="meta-label">Email Subject</div><div class="meta-value prose" id="meta-subject"></div></div>
+        <div class="meta-row"><div class="meta-label">Internal Text</div><div class="meta-value prose" id="meta-internal"></div></div>
       </div>
     </div>
-
     <div class="divider-h" id="div3" style="height:5px;cursor:row-resize;background:var(--border);flex-shrink:0;transition:background 0.15s;"></div>
-
     <div class="email-wrap">
-      <div class="panel-header">
-        <div class="dot" style="background:var(--accent2)"></div>Email Preview
-      </div>
+      <div class="panel-header"><div class="dot" style="background:var(--accent2)"></div>Email Preview</div>
       <iframe id="preview-frame" sandbox="allow-same-origin"></iframe>
     </div>
-
   </div>
 </div>
-
 <script src="variables.js"></script>
 <script>
-  // ─── GITHUB TEMPLATE LOADER CONFIG ──────────────────────────────────────────
-  // Set this to your GitHub raw content base URL
-  // Templates are fetched as: GITHUB_RAW_BASE + templateId + GITHUB_FILE_EXT
   const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/tuehvass/email/main/templates/';
   const GITHUB_FILE_EXT = '.sql';
 
@@ -158,8 +117,7 @@
 
   // ─── TOKENIZER ───────────────────────────────────────────────────────────────
   function tokenize(src) {
-    const tokens = [];
-    let i = 0;
+    const tokens = []; let i = 0;
     while (i < src.length) {
       const start = src.indexOf('{{', i);
       if (start === -1) { tokens.push({ type: 'text', value: src.slice(i) }); break; }
@@ -178,8 +136,7 @@
 
   // ─── SPLIT ON | RESPECTING NESTING AND HTML QUOTES ───────────────────────────
   function splitParts(inner) {
-    const parts = [];
-    let current = '', depth = 0, i = 0, inQuote = null;
+    const parts = []; let current = '', depth = 0, i = 0, inQuote = null;
     while (i < inner.length) {
       const ch = inner[i];
       if (depth === 0 && !inQuote && (ch === '"' || ch === "'")) { inQuote = ch; current += ch; i++; continue; }
@@ -194,14 +151,12 @@
     return parts;
   }
 
-  // ─── DETECT IF POSITION IS INSIDE AN HTML ATTRIBUTE ────────────────────────────
-  // Looks backward from tagStart to the nearest < and counts " - odd = inside attr
+  // ─── DETECT IF INSIDE HTML ATTRIBUTE ─────────────────────────────────────────
   function isInsideHtmlAttr(src, tagStart) {
     const before = src.slice(0, tagStart);
     const lastTag = before.lastIndexOf('<');
     if (lastTag === -1) return false;
-    const segment = before.slice(lastTag);
-    return (segment.split('"').length - 1) % 2 === 1;
+    return (before.slice(lastTag).split('"').length - 1) % 2 === 1;
   }
 
   // ─── DECODE MAIL ENGINE ESCAPING ─────────────────────────────────────────────
@@ -213,29 +168,26 @@
 
   // ─── EVALUATE CONDITION ──────────────────────────────────────────────────────
   function evalCondition(actual, op, type, matchVal) {
-    const a = type === 'NUMBER' ? parseFloat(actual) : actual.trim();
-    const b = type === 'NUMBER' ? parseFloat(matchVal) : matchVal.trim();
+    const a = type === 'NUMBER' ? parseFloat(actual || 0) : actual.trim();
+    const b = type === 'NUMBER' ? parseFloat(matchVal)    : matchVal.trim();
     switch(op) {
       case '=':  return a == b;  case '!=': return a != b;
-      case '>':  return a > b;   case '<':  return a < b;
+      case '>':  return a >  b;  case '<':  return a <  b;
       case '>=': return a >= b;  case '<=': return a <= b;
       default:   return false;
     }
   }
 
-  // ─── UNKNOWN VAR SPAN HELPERS ────────────────────────────────────────────────
-  function redSpan(label)    { return `<span style="background:#7f1d1d;color:#fca5a5;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">${label}</span>`; }
-  function yellowSpan(label) { return `<span style="background:#78350f;color:#fcd34d;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">${label}</span>`; }
+  // ─── SPAN HELPERS ────────────────────────────────────────────────────────────
+  function redSpan(l)    { return '<span style="background:#7f1d1d;color:#fca5a5;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">' + l + '</span>'; }
+  function yellowSpan(l) { return '<span style="background:#78350f;color:#fcd34d;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">' + l + '</span>'; }
 
   // ─── MAIN RECURSIVE EVALUATOR ────────────────────────────────────────────────
-  // mode 'html' → coloured spans for unknowns; 'text' → plain {{VAR}}
-  // usedVars: Set that collects which vars were actually needed during this render
   function evaluate(src, values, unknowns, mode, usedVars) {
     mode     = mode     || 'html';
     usedVars = usedVars || new Set();
     const tokens = tokenize(src);
-    let result = '';
-    let pos = 0;
+    let result = '', pos = 0;
 
     for (const token of tokens) {
       if (token.type === 'text') { result += token.value; pos += token.value.length; continue; }
@@ -243,53 +195,41 @@
       const tagFull = '{{' + token.value + '}}';
       const tagPos  = src.indexOf(tagFull, pos);
       const inAttr  = (mode === 'html') && isInsideHtmlAttr(src, tagPos !== -1 ? tagPos : pos);
+      const parts   = splitParts(token.value);
+      const cmd     = parts[0].trim();
 
-      const parts = splitParts(token.value);
-      const cmd   = parts[0].trim();
-
-      // ── IF ──────────────────────────────────────────────────────────────────
-      // Supports: TEXT|value or ARG|VARNAME as branch values
-      // Format: {{IF|ARG|VAR|OP|TYPE|MATCHVAL|BRANCH_TYPE|BRANCH_VAL|BRANCH_TYPE|BRANCH_VAL}}
+      // ── IF ────────────────────────────────────────────────────────────────────
       if (cmd === 'IF' && parts[1] === 'ARG') {
-        const varName  = parts[2];
-        const op       = parts[3];
-        const type     = parts[4];
-        const matchVal = parts[5];
-        // parts[6] = true branch type (TEXT or ARG)
-        // parts[7] = true branch value
-        // parts[8] = false branch type (TEXT or ARG)
-        // parts[9] = false branch value
-        const trueBranchType  = parts[6] || 'TEXT';
-        const trueBranchVal   = parts[7] || '';
-        const falseBranchType = parts[8] || 'TEXT';
-        const falseBranchVal  = parts[9] || '';
-        const actual = values[varName] !== undefined ? String(values[varName]) : '';
+        const varName      = parts[2];
+        const op           = parts[3];
+        const type         = parts[4];
+        const matchVal     = parts[5];
+        const trueBType    = parts[6] || 'TEXT';
+        const trueBVal     = parts[7] || '';
+        const falseBType   = parts[8] || 'TEXT';
+        const falseBVal    = parts[9] || '';
+        const actual       = values[varName] !== undefined ? String(values[varName]) : '';
         usedVars.add(varName);
+        const branchMode   = (inAttr || mode === 'attr') ? 'attr' : mode;
 
         function resolveBranch(bType, bVal) {
-          // Use 'attr' mode if we're inside an HTML attribute so spans aren't injected
-          const branchMode = inAttr ? 'attr' : mode;
-          if (bType === 'ARG') {
-            const wrapped = '{{ARG|' + bVal + '}}';
-            return evaluate(wrapped, values, unknowns, branchMode, usedVars);
-          }
+          if (bType === 'ARG') return evaluate('{{ARG|' + bVal + '}}', values, unknowns, branchMode, usedVars);
           return evaluate(bVal, values, unknowns, branchMode, usedVars);
         }
 
-        const taken    = evalCondition(actual, op, type, matchVal);
-        const branch    = taken ? resolveBranch(trueBranchType, trueBranchVal)
-                                : resolveBranch(falseBranchType, falseBranchVal);
-        // Scan non-taken branch for vars so they appear in panel
-        const notBType = taken ? falseBranchType : trueBranchType;
-        const notBVal  = taken ? falseBranchVal  : trueBranchVal;
+        const taken      = evalCondition(actual, op, type, matchVal);
+        result          += taken ? resolveBranch(trueBType, trueBVal) : resolveBranch(falseBType, falseBVal);
+
+        // Scan non-taken branch so its vars appear in panel
+        const notBType   = taken ? falseBType : trueBType;
+        const notBVal    = taken ? falseBVal  : trueBVal;
         if (notBType === 'ARG') evaluate('{{ARG|' + notBVal + '}}', values, new Set(), 'text', usedVars);
         else evaluate(notBVal, values, new Set(), 'text', usedVars);
 
-        result += branch;
         pos += tagFull.length; continue;
       }
 
-      // ── ARG fallback chain ───────────────────────────────────────────────────
+      // ── ARG fallback chain ────────────────────────────────────────────────────
       if (cmd === 'ARG') {
         let resolved = null;
         const allNames = [];
@@ -298,109 +238,75 @@
             const name = parts[k+1].trim();
             allNames.push(name);
             if (!VAR_LOOKUP[name]) unknowns.add(name);
-            // Mark as used and stop walking chain once resolved
-            if (resolved === null) {
-              usedVars.add(name);
-              if (values[name] !== undefined && values[name] !== '') resolved = values[name];
-              // If not resolved yet, also mark next fallback as needed
-              // (so it shows up in the panel ready to be filled)
-            }
+            usedVars.add(name);
+            if (resolved === null && values[name] !== undefined && values[name] !== '') resolved = values[name];
           }
         }
         if (resolved !== null) { result += resolved; pos += tagFull.length; continue; }
-        // Nothing resolved — mark first unresolved as used so it shows in panel
-        // Also mark the next fallback so user knows to fill it
-        allNames.forEach(n => usedVars.add(n));
-        const label = '{{ARG|' + (allNames[0] || '?') + '}}';
+        const label   = '{{ARG|' + (allNames[0] || '?') + '}}';
         const isKnown = allNames.some(n => VAR_LOOKUP[n]);
-        if (inAttr || mode==='attr') result += label;
-        else if (mode==='html')      result += isKnown ? yellowSpan(label) : redSpan(label);
-        else                         result += label;
+        if (inAttr || mode === 'attr') result += label;
+        else if (mode === 'html')      result += isKnown ? yellowSpan(label) : redSpan(label);
+        else                           result += label;
         pos += tagFull.length; continue;
       }
 
-      // ── Simple {{VARNAME}} ───────────────────────────────────────────────────
+      // ── Simple {{VARNAME}} ────────────────────────────────────────────────────
       const name = cmd;
       if (['ARG','IF','TEXT','NUMBER'].includes(name)) { pos += tagFull.length; continue; }
       usedVars.add(name);
       if (values[name] !== undefined && values[name] !== '') { result += values[name]; pos += tagFull.length; continue; }
       if (!VAR_LOOKUP[name]) unknowns.add(name);
       const label2 = '{{' + name + '}}';
-      if (inAttr || mode==='attr') result += label2;
-      else if (mode==='html')      result += VAR_LOOKUP[name] ? yellowSpan(label2) : redSpan(label2);
-      else                         result += label2;
+      if (inAttr || mode === 'attr') result += label2;
+      else if (mode === 'html')      result += VAR_LOOKUP[name] ? yellowSpan(label2) : redSpan(label2);
+      else                           result += label2;
       pos += tagFull.length;
     }
     return result;
   }
 
-  // ─── PARSE do_template_setup ARGUMENTS ───────────────────────────────────────
-  // Extracts single-quoted string args, correctly handling:
-  //   ''   -> escaped single quote inside string
-  //   '||' -> Oracle string concatenation (joins segments, not end of string)
+  // ─── PARSE do_template_setup ─────────────────────────────────────────────────
   function extractSetupArgs(src) {
     const triggerMatch = src.match(/--\s*Make\s+template\s+setup/i);
     if (!triggerMatch) return null;
-
     const afterTrigger = src.slice(triggerMatch.index);
     const callMatch = afterTrigger.match(/do_template_setup\s*\(/i);
     if (!callMatch) return null;
-
     let pos = afterTrigger.indexOf('(', callMatch.index) + 1;
     const args = [];
-
     while (pos < afterTrigger.length && args.length < 7) {
-      // Skip whitespace and commas between args
       while (pos < afterTrigger.length && /[\s,]/.test(afterTrigger[pos])) pos++;
       if (pos >= afterTrigger.length) break;
-
       if (afterTrigger[pos] === "'") {
-        pos++; // skip opening quote
+        pos++;
         let val = '';
         while (pos < afterTrigger.length) {
           const ch = afterTrigger[pos];
-          if (ch === "'" && afterTrigger[pos+1] === "'") {
-            // Escaped quote: '' -> '
-            val += "'"; pos += 2;
-          } else if (ch === "'" && afterTrigger[pos+1] === '|' && afterTrigger[pos+2] === '|') {
-            // Oracle concatenation: 'text'||'more' - skip closing quote and ||
-            pos++; // skip quote
-            while (pos < afterTrigger.length && afterTrigger[pos] === '|') pos++; // skip ||
-            if (afterTrigger[pos] === "'") pos++; // skip next opening quote
-          } else if (ch === "'") {
-            pos++; break; // real end of string
-          } else {
-            val += ch; pos++;
-          }
+          if (ch === "'" && afterTrigger[pos+1] === "'") { val += "'"; pos += 2; }
+          else if (ch === "'" && afterTrigger[pos+1] === '|' && afterTrigger[pos+2] === '|') {
+            pos++;
+            while (pos < afterTrigger.length && afterTrigger[pos] === '|') pos++;
+            if (afterTrigger[pos] === "'") pos++;
+          } else if (ch === "'") { pos++; break; }
+          else { val += ch; pos++; }
         }
         args.push(val);
       } else {
-        // Skip unquoted token
         while (pos < afterTrigger.length && afterTrigger[pos] !== ',' && afterTrigger[pos] !== ')') pos++;
       }
     }
-
-    return {
-      code:         args[0] || '',
-      name:         args[1] || '',
-      senderRaw:    args[2] || '',
-      internalNote: args[3] || '',
-      subjectRaw:   args[4] || '',
-      internalText: args[5] || '',
-      htmlBody:     args[6] || '',
-    };
+    return { code: args[0]||'', name: args[1]||'', senderRaw: args[2]||'', internalNote: args[3]||'', subjectRaw: args[4]||'', internalText: args[5]||'', htmlBody: args[6]||'' };
   }
 
-  // ─── EXTRACT ALL VAR NAMES FROM RAW SOURCE ───────────────────────────────────
+  // ─── EXTRACT ALL VAR NAMES ────────────────────────────────────────────────────
   function extractAllVarNames(src) {
     const found = new Set();
     const re  = /\{\{(?:IF\|ARG\||ARG\|)([A-Z0-9_]+)/g;
     const re2 = /\{\{([A-Z0-9_]+)\}\}/g;
     let m;
     while ((m = re.exec(src))  !== null) found.add(m[1]);
-    while ((m = re2.exec(src)) !== null) {
-      if (!['ARG','IF','TEXT','NUMBER'].includes(m[1])) found.add(m[1]);
-    }
+    while ((m = re2.exec(src)) !== null) { if (!['ARG','IF','TEXT','NUMBER'].includes(m[1])) found.add(m[1]); }
     return found;
   }
 
@@ -420,27 +326,20 @@
   }
 
   // ─── RENDER VARIABLES PANEL ──────────────────────────────────────────────────
-  // usedVars: Set of var names actually consumed in last render (dynamic filtering)
   function renderVars(allVarNames, usedVars) {
-    // Only show vars that were actually used in the last render
-    // Fall back to allVarNames if usedVars not yet available (first render)
-    const activeNames = usedVars && usedVars.size > 0 ? usedVars : allVarNames;
+    const activeNames = (usedVars && usedVars.size > 0) ? usedVars : allVarNames;
     const known   = [...activeNames].filter(n => VAR_LOOKUP[n]);
     const unknown = [...activeNames].filter(n => !VAR_LOOKUP[n]);
-
-    // Preserve values for ALL known vars even if not shown (so they survive re-renders)
     const allKnown = [...allVarNames].filter(n => VAR_LOOKUP[n]);
+
     const newVars = {};
     allKnown.forEach(n => {
       const def = VAR_LOOKUP[n];
       if (def.type === 'toggle') {
-        // Toggles always use current value or first option
-        newVars[n] = vars[n] !== undefined ? vars[n] : (def.values ? def.values[0] : '1');
+        newVars[n] = (vars[n] !== undefined) ? vars[n] : (def.values ? def.values[0] : '1');
       } else if (vars[n] !== undefined && vars[n] !== '') {
-        // User has explicitly typed something — keep it
         newVars[n] = vars[n];
       } else if (def.default !== undefined) {
-        // Use hardcoded default from variables.js
         newVars[n] = def.default;
       } else {
         newVars[n] = '';
@@ -458,17 +357,15 @@
       const def  = VAR_LOOKUP[name];
       const item = document.createElement('div');
       item.className = 'var-item';
-      const lbl = `<label>${name} <span class="desc">${def.description}</span></label>`;
+      const lbl = '<label>' + name + ' <span class="desc">' + def.description + '</span></label>';
 
       if (def.type === 'toggle') {
-        // Use values array from definition, fallback to ['1', 'Other'] if not specified
         const toggleVals = def.values || ['1', 'Other'];
-        // Default to first value if current value not in list
         if (!toggleVals.includes(vars[name])) vars[name] = toggleVals[0];
         const btns = toggleVals.map(v =>
-          `<button class="var-btn ${vars[name]===v?'active':''}" data-var="${name}" data-val="${v}">${v}</button>`
+          '<button class="var-btn ' + (vars[name]===v?'active':'') + '" data-var="' + name + '" data-val="' + v + '">' + v + '</button>'
         ).join('');
-        item.innerHTML = lbl + `<div class="var-btn-group">${btns}</div>`;
+        item.innerHTML = lbl + '<div class="var-btn-group">' + btns + '</div>';
         item.querySelectorAll('.var-btn').forEach(btn => btn.addEventListener('click', e => {
           vars[name] = e.target.dataset.val;
           item.querySelectorAll('.var-btn').forEach(b => b.classList.remove('active'));
@@ -476,10 +373,10 @@
           update(false);
         }));
       } else if (def.type === 'number') {
-        item.innerHTML = lbl + `<input class="var-input" type="number" step="1" data-var="${name}" value="${vars[name]}" placeholder="0">`;
+        item.innerHTML = lbl + '<input class="var-input" type="number" step="1" data-var="' + name + '" value="' + vars[name] + '" placeholder="0">';
         item.querySelector('input').addEventListener('input', e => { vars[name] = e.target.value; update(false); });
       } else {
-        item.innerHTML = lbl + `<input class="var-input" type="text" data-var="${name}" value="${vars[name]}" placeholder="value...">`;
+        item.innerHTML = lbl + '<input class="var-input" type="text" data-var="' + name + '" value="' + vars[name] + '" placeholder="value...">';
         item.querySelector('input').addEventListener('input', e => { vars[name] = e.target.value; update(false); });
       }
       varList.appendChild(item);
@@ -488,8 +385,8 @@
     if (unknown.length > 0) {
       const box = document.createElement('div');
       box.className = 'unknown-vars';
-      box.innerHTML = `<div class="title">⚠ Not in variable list</div>` +
-        unknown.map(n => `<div class="unknown-var-item">{{${n}}}</div>`).join('');
+      box.innerHTML = '<div class="title">⚠ Not in variable list</div>' +
+        unknown.map(n => '<div class="unknown-var-item">{{' + n + '}}</div>').join('');
       varList.appendChild(box);
     }
   }
@@ -498,29 +395,17 @@
   function renderMeta(setup, unknowns, usedVars) {
     if (!setup || !setup.name) { metaBlock.style.display = 'none'; return; }
     metaBlock.style.display = 'block';
-
-    document.getElementById('meta-name').textContent =
-      (setup.name || '') + (setup.code ? '  [' + setup.code + ']' : '');
-
-    // Sender: senderRaw is already a full {{ARG|...|ARG|...}} expression
-    document.getElementById('meta-sender').innerHTML =
-      evaluate(decodeMail(setup.senderRaw), vars, unknowns, 'html', usedVars);
-
-    document.getElementById('meta-note').textContent = setup.internalNote;
-
-    document.getElementById('meta-subject').innerHTML =
-      evaluate(decodeMail(setup.subjectRaw), vars, unknowns, 'html', usedVars);
-
-    document.getElementById('meta-internal').innerHTML =
-      evaluate(decodeMail(setup.internalText), vars, unknowns, 'html', usedVars);
+    document.getElementById('meta-name').textContent = (setup.name||'') + (setup.code ? '  ['+setup.code+']' : '');
+    document.getElementById('meta-sender').innerHTML  = evaluate(decodeMail(setup.senderRaw),   vars, unknowns, 'html', usedVars);
+    document.getElementById('meta-note').textContent  = setup.internalNote;
+    document.getElementById('meta-subject').innerHTML = evaluate(decodeMail(setup.subjectRaw),  vars, unknowns, 'html', usedVars);
+    document.getElementById('meta-internal').innerHTML= evaluate(decodeMail(setup.internalText),vars, unknowns, 'html', usedVars);
   }
 
   // ─── RENDER EMAIL PREVIEW ────────────────────────────────────────────────────
   function renderPreview(html, unknowns, usedVars) {
-    const body = html.trim() ||
-      '<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>';
-    const decoded  = decodeMail(body);
-    const rendered = html.trim() ? evaluate(decoded, vars, unknowns, 'html', usedVars) : body;
+    const body = html.trim() || '<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>';
+    const rendered = html.trim() ? evaluate(decodeMail(html), vars, unknowns, 'html', usedVars) : body;
     ensureFonts(rendered);
     frame.contentDocument.open();
     frame.contentDocument.write(rendered);
@@ -529,29 +414,21 @@
 
   // ─── MAIN UPDATE ─────────────────────────────────────────────────────────────
   function update(rebuildVars) {
-    const raw    = templateEl.value;
-    const setup  = extractSetupArgs(raw);
+    const raw   = templateEl.value;
+    const setup = extractSetupArgs(raw);
     let htmlBody = '';
     if (setup && setup.htmlBody) {
       htmlBody = setup.htmlBody;
     } else {
       const idx = raw.indexOf('<!DOCTYPE');
-      if (idx !== -1) {
-        htmlBody = raw.slice(idx).replace(/'\s*\)\s*;?\s*$/, '').trim();
-      } else {
-        htmlBody = raw;
-      }
+      if (idx !== -1) htmlBody = raw.slice(idx).replace(/'[\s]*\)[\s]*;?[\s]*$/, '').trim();
+      else htmlBody = raw;
     }
 
     const allVarNames = extractAllVarNames(raw);
-
-    // First pass: dry-run evaluate to find which vars are actually used
-    // with current values, so we can show only relevant vars in panel
-    const usedVars   = new Set();
-    const dryUnknown = new Set();
-    const fullSrc    = (setup ? 
-      (setup.senderRaw + ' ' + setup.subjectRaw + ' ' + setup.internalText + ' ') : '')
-      + htmlBody;
+    const usedVars    = new Set();
+    const dryUnknown  = new Set();
+    const fullSrc     = (setup ? (setup.senderRaw+' '+setup.subjectRaw+' '+setup.internalText+' ') : '') + htmlBody;
     if (fullSrc.trim()) evaluate(decodeMail(fullSrc), vars, dryUnknown, 'text', usedVars);
 
     if (rebuildVars) renderVars(allVarNames, usedVars);
@@ -561,120 +438,62 @@
     renderPreview(htmlBody, unknowns, usedVars);
   }
 
-  // Init iframe
+  // ─── INIT ────────────────────────────────────────────────────────────────────
   frame.contentDocument.open();
   frame.contentDocument.write('<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>');
   frame.contentDocument.close();
-
   templateEl.addEventListener('input', () => update(true));
 
-  // ─── URL PARAMETER TEMPLATE LOADER ───────────────────────────────────────────
-  // Supports ?template=AS01 to auto-load a template from GitHub
+  // ─── URL PARAMETER LOADER ────────────────────────────────────────────────────
   (async function loadFromUrl() {
-    const params     = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search);
     const templateId = params.get('template');
     if (!templateId) return;
-
     const url = GITHUB_RAW_BASE + templateId + GITHUB_FILE_EXT;
-
-    // Show loading state
     templateEl.value = '-- Loading ' + templateId + ' from GitHub...';
     templateEl.style.color = 'var(--text3)';
-
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const text = await res.text();
-      templateEl.value = text;
+      templateEl.value = await res.text();
       templateEl.style.color = '';
       update(true);
     } catch (err) {
-      templateEl.value = '-- Could not load template: ' + templateId + '\n-- URL: ' + url + '\n-- Error: ' + err.message;
+      templateEl.value = '-- Could not load: ' + templateId + '\n-- ' + err.message;
       templateEl.style.color = 'var(--danger)';
     }
   })();
 
-  // ─── RESIZABLE DIVIDERS ─────────────────────────────────────────────────────
-  const ws          = document.querySelector('.workspace');
-  const pFrame      = document.getElementById('preview-frame');
-  const pPanel      = document.querySelector('.preview-panel');
-  let activeCol     = null;
-  let activeRow     = false;
+  // ─── RESIZABLE DIVIDERS ──────────────────────────────────────────────────────
+  const ws     = document.querySelector('.workspace');
+  const pFrame = document.getElementById('preview-frame');
+  const pPanel = document.querySelector('.preview-panel');
+  let activeCol = null, activeRow = false;
 
-  function getColSizes() {
-    return getComputedStyle(ws).gridTemplateColumns.split(' ').map(c => parseFloat(c));
-  }
-  function setColSizes(l, m, r) {
-    ws.style.gridTemplateColumns = l + 'px 5px ' + m + 'px 5px ' + r + 'px';
-  }
+  function getColSizes() { return getComputedStyle(ws).gridTemplateColumns.split(' ').map(c => parseFloat(c)); }
+  function setColSizes(l,m,r) { ws.style.gridTemplateColumns = l+'px 5px '+m+'px 5px '+r+'px'; }
 
-  document.getElementById('div1').addEventListener('mousedown', e => {
-    activeCol = 'div1';
-    e.currentTarget.classList.add('dragging');
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    pFrame.style.pointerEvents = 'none';
-    e.preventDefault();
-  });
-
-  document.getElementById('div2').addEventListener('mousedown', e => {
-    activeCol = 'div2';
-    e.currentTarget.classList.add('dragging');
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    pFrame.style.pointerEvents = 'none';
-    e.preventDefault();
-  });
-
-  document.getElementById('div3').addEventListener('mousedown', e => {
-    activeRow = true;
-    e.currentTarget.classList.add('dragging');
-    document.body.style.cursor = 'row-resize';
-    document.body.style.userSelect = 'none';
-    pFrame.style.pointerEvents = 'none';
-    e.preventDefault();
-  });
+  document.getElementById('div1').addEventListener('mousedown', e => { activeCol='div1'; e.currentTarget.classList.add('dragging'); document.body.style.cursor='col-resize'; document.body.style.userSelect='none'; pFrame.style.pointerEvents='none'; e.preventDefault(); });
+  document.getElementById('div2').addEventListener('mousedown', e => { activeCol='div2'; e.currentTarget.classList.add('dragging'); document.body.style.cursor='col-resize'; document.body.style.userSelect='none'; pFrame.style.pointerEvents='none'; e.preventDefault(); });
+  document.getElementById('div3').addEventListener('mousedown', e => { activeRow=true;   e.currentTarget.classList.add('dragging'); document.body.style.cursor='row-resize'; document.body.style.userSelect='none'; pFrame.style.pointerEvents='none'; e.preventDefault(); });
 
   document.addEventListener('mousemove', e => {
     if (activeCol) {
-      const rect   = ws.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const cols   = getColSizes();
-      const left   = cols[0], mid = cols[2];
-      const totalW = rect.width - 10;
-      if (activeCol === 'div1') {
-        const newLeft  = Math.max(80, Math.min(mouseX, totalW - mid - 80));
-        const newRight = Math.max(80, totalW - newLeft - mid);
-        setColSizes(newLeft, mid, newRight);
-      } else {
-        const newMid   = Math.max(80, Math.min(mouseX - left - 5, totalW - left - 80));
-        const newRight = Math.max(80, totalW - left - newMid);
-        setColSizes(left, newMid, newRight);
-      }
+      const rect=ws.getBoundingClientRect(), mouseX=e.clientX-rect.left, cols=getColSizes(), left=cols[0], mid=cols[2], totalW=rect.width-10;
+      if (activeCol==='div1') { const l=Math.max(80,Math.min(mouseX,totalW-mid-80)); setColSizes(l,mid,Math.max(80,totalW-l-mid)); }
+      else { const m=Math.max(80,Math.min(mouseX-left-5,totalW-left-80)); setColSizes(left,m,Math.max(80,totalW-left-m)); }
     }
     if (activeRow) {
-      const contRect = pPanel.getBoundingClientRect();
-      const newH = Math.max(40, Math.min(e.clientY - contRect.top, contRect.height - 80));
-      metaBlock.style.height    = newH + 'px';
-      metaBlock.style.maxHeight = newH + 'px';
-      metaBlock.style.flex      = 'none';
+      const cr=pPanel.getBoundingClientRect(), newH=Math.max(40,Math.min(e.clientY-cr.top,cr.height-80));
+      metaBlock.style.height=newH+'px'; metaBlock.style.maxHeight=newH+'px'; metaBlock.style.flex='none';
     }
   });
 
   document.addEventListener('mouseup', () => {
-    if (activeCol) {
-      document.getElementById(activeCol).classList.remove('dragging');
-      activeCol = null;
-    }
-    if (activeRow) {
-      document.getElementById('div3').classList.remove('dragging');
-      activeRow = false;
-    }
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-    pFrame.style.pointerEvents = '';
+    if (activeCol) { document.getElementById(activeCol).classList.remove('dragging'); activeCol=null; }
+    if (activeRow) { document.getElementById('div3').classList.remove('dragging'); activeRow=false; }
+    document.body.style.cursor=''; document.body.style.userSelect=''; pFrame.style.pointerEvents='';
   });
-
 </script>
 </body>
 </html>
