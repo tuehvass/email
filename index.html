@@ -432,12 +432,16 @@
     const allKnown = [...allVarNames].filter(n => VAR_LOOKUP[n]);
     const newVars = {};
     allKnown.forEach(n => {
-      if (vars[n] !== undefined) {
+      const def = VAR_LOOKUP[n];
+      if (def.type === 'toggle') {
+        // Toggles always use current value or first option
+        newVars[n] = vars[n] !== undefined ? vars[n] : (def.values ? def.values[0] : '1');
+      } else if (vars[n] !== undefined && vars[n] !== '') {
+        // User has explicitly typed something — keep it
         newVars[n] = vars[n];
-      } else if (VAR_LOOKUP[n].type === 'toggle') {
-        newVars[n] = VAR_LOOKUP[n].values ? VAR_LOOKUP[n].values[0] : '1';
-      } else if (VAR_LOOKUP[n].default !== undefined) {
-        newVars[n] = VAR_LOOKUP[n].default;
+      } else if (def.default !== undefined) {
+        // Use hardcoded default from variables.js
+        newVars[n] = def.default;
       } else {
         newVars[n] = '';
       }
