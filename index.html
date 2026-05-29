@@ -252,7 +252,10 @@
         const actual   = values[varName] !== undefined ? String(values[varName]) : '';
         usedVars.add(varName);
         const branch = evalCondition(actual, op, type, matchVal) ? trueVal : falseVal;
+        const notBranch = evalCondition(actual, op, type, matchVal) ? falseVal : trueVal;
         result += evaluate(branch, values, unknowns, mode, usedVars);
+        // Also scan the non-taken branch for vars so they appear in the panel
+        evaluate(notBranch, values, new Set(), 'text', usedVars);
         pos += tagFull.length; continue;
       }
 
@@ -548,13 +551,23 @@
       if (axis === 'x') {
         getPanelA().style.width = newA + 'px';
         getPanelA().style.flex = 'none';
-        getPanelB().style.width = newB + 'px';
-        getPanelB().style.flex = 'none';
+        // Only fix width on B if it's not the rightmost panel (which should flex)
+        if (getPanelB().id !== 'panel-right') {
+          getPanelB().style.width = newB + 'px';
+          getPanelB().style.flex = 'none';
+        }
+        // For div2 (mid->right), fix mid and let right flex
+        if (getPanelA().id === 'panel-mid') {
+          getPanelA().style.width = newA + 'px';
+          getPanelA().style.flex = 'none';
+          getPanelB().style.flex = '1';
+          getPanelB().style.width = '';
+        }
       } else {
         getPanelA().style.height = newA + 'px';
         getPanelA().style.flex = 'none';
-        getPanelB().style.height = newB + 'px';
-        getPanelB().style.flex = 'none';
+        getPanelB().style.flex = '1';
+        getPanelB().style.height = '';
       }
     });
 
