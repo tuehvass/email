@@ -541,21 +541,18 @@
     workspace.style.gridTemplateColumns = `${left}px 5px ${mid}px 5px ${right}px`;
   }
 
-  document.getElementById('div1').addEventListener('mousedown', e => {
-    activeDivider = 'div1';
-    document.getElementById('div1').classList.add('dragging');
+  function startDrag(id, e) {
+    activeDivider = id;
+    document.getElementById(id).classList.add('dragging');
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
+    // Disable pointer events on iframe so mousemove isn't swallowed
+    frame.style.pointerEvents = 'none';
     e.preventDefault();
-  });
+  }
 
-  document.getElementById('div2').addEventListener('mousedown', e => {
-    activeDivider = 'div2';
-    document.getElementById('div2').classList.add('dragging');
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    e.preventDefault();
-  });
+  document.getElementById('div1').addEventListener('mousedown', e => startDrag('div1', e));
+  document.getElementById('div2').addEventListener('mousedown', e => startDrag('div2', e));
 
   document.addEventListener('mousemove', e => {
     if (!activeDivider) return;
@@ -583,6 +580,7 @@
     activeDivider = null;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
+    frame.style.pointerEvents = '';
   });
 
   // Horizontal divider inside right panel (meta vs email)
@@ -595,6 +593,7 @@
     document.getElementById('div3').classList.add('dragging');
     document.body.style.cursor = 'row-resize';
     document.body.style.userSelect = 'none';
+    frame.style.pointerEvents = 'none';
     e.preventDefault();
   });
 
@@ -613,6 +612,7 @@
     document.getElementById('div3').classList.remove('dragging');
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
+    frame.style.pointerEvents = '';
   });
 
 </script>
