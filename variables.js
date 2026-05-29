@@ -1,5 +1,5 @@
 const VARIABLE_DEFINITIONS = [
-  { name: 'CUST_BROKER',             type: 'toggle',  values: ['1', '2'],  description: 'Broker flag (1 = Forsia og andre, 2 = DFHF)' },
+  { name: 'CUST_BROKER',             type: 'toggle',  values: ['1', '10'], description: 'Broker flag (1 = Forsia og andre, 10 = DFHF)' },
   { name: 'CUST_NAME',               type: 'text',                         description: 'Kundenavn' },
   { name: 'POL_LINE_EXCESS',         type: 'number',                       description: 'Selvrisiko numerisk' },
   { name: 'POL_LINE_EXCESS_DESC',    type: 'text',                         description: 'Selvrisikobeløb i kroner' },
