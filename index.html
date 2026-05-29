@@ -180,6 +180,16 @@
     return parts;
   }
 
+  // ─── DETECT IF POSITION IS INSIDE AN HTML ATTRIBUTE ────────────────────────────
+  // Looks backward from tagStart to the nearest < and counts " - odd = inside attr
+  function isInsideHtmlAttr(src, tagStart) {
+    const before = src.slice(0, tagStart);
+    const lastTag = before.lastIndexOf('<');
+    if (lastTag === -1) return false;
+    const segment = before.slice(lastTag);
+    return (segment.split('"').length - 1) % 2 === 1;
+  }
+
   // ─── DECODE MAIL ENGINE ESCAPING ─────────────────────────────────────────────
   function decodeMail(src) {
     src = src.replace(/'?\|\|'&'\|\|'([a-zA-Z0-9#]+);/g, '&$1;');
@@ -209,9 +219,15 @@
     mode = mode || 'html';
     const tokens = tokenize(src);
     let result = '';
+    let pos = 0;
 
     for (const token of tokens) {
-      if (token.type === 'text') { result += token.value; continue; }
+      if (token.type === 'text') { result += token.value; pos += token.value.length; continue; }
+
+      // Detect if this tag sits inside an HTML attribute (e.g. href="...{{...}}...")
+      const tagFull = '{{' + token.value + '}}';
+      const tagPos  = src.indexOf(tagFull, pos);
+      const inAttr  = (mode === 'html') && isInsideHtmlAttr(src, tagPos !== -1 ? tagPos : pos);
 
       const parts = splitParts(token.value);
       const cmd   = parts[0].trim();
@@ -227,7 +243,7 @@
         const actual   = values[varName] !== undefined ? String(values[varName]) : '';
         const branch   = evalCondition(actual, op, type, matchVal) ? trueVal : falseVal;
         result += evaluate(branch, values, unknowns, mode);
-        continue;
+        pos += tagFull.length; continue;
       }
 
       // ── ARG fallback chain ───────────────────────────────────────────────────
@@ -242,22 +258,25 @@
             if (resolved === null && values[name] !== undefined && values[name] !== '') resolved = values[name];
           }
         }
-        if (resolved !== null) { result += resolved; continue; }
-        const label = `{{ARG|${allNames[0] || '?'}}}`;
+        if (resolved !== null) { result += resolved; pos += tagFull.length; continue; }
+        const label = '{{ARG|' + (allNames[0] || '?') + '}}';
         const isKnown = allNames.some(n => VAR_LOOKUP[n]);
-        if (mode === 'html') result += isKnown ? yellowSpan(label) : redSpan(label);
-        else                 result += label;
-        continue;
+        if (inAttr)           result += label;  // plain text inside HTML attributes
+        else if (mode==='html') result += isKnown ? yellowSpan(label) : redSpan(label);
+        else                  result += label;
+        pos += tagFull.length; continue;
       }
 
       // ── Simple {{VARNAME}} ───────────────────────────────────────────────────
       const name = cmd;
-      if (['ARG','IF','TEXT','NUMBER'].includes(name)) continue;
-      if (values[name] !== undefined && values[name] !== '') { result += values[name]; continue; }
+      if (['ARG','IF','TEXT','NUMBER'].includes(name)) { pos += tagFull.length; continue; }
+      if (values[name] !== undefined && values[name] !== '') { result += values[name]; pos += tagFull.length; continue; }
       if (!VAR_LOOKUP[name]) unknowns.add(name);
-      const label2 = `{{${name}}}`;
-      if (mode === 'html') result += VAR_LOOKUP[name] ? yellowSpan(label2) : redSpan(label2);
-      else                 result += label2;
+      const label2 = '{{' + name + '}}';
+      if (inAttr)            result += label2;
+      else if (mode==='html') result += VAR_LOOKUP[name] ? yellowSpan(label2) : redSpan(label2);
+      else                   result += label2;
+      pos += tagFull.length;
     }
     return result;
   }
