@@ -263,9 +263,10 @@
   }
 
   // ─── PARSE do_template_setup ARGUMENTS ───────────────────────────────────────
-  // Extracts single-quoted string args, handling '' escaping inside strings
+  // Extracts single-quoted string args, correctly handling:
+  //   ''   -> escaped single quote inside string
+  //   '||' -> Oracle string concatenation (joins segments, not end of string)
   function extractSetupArgs(src) {
-    // Find "-- Make template setup" trigger (case-insensitive, may have spaces)
     const triggerMatch = src.match(/--\s*Make\s+template\s+setup/i);
     if (!triggerMatch) return null;
 
@@ -273,12 +274,11 @@
     const callMatch = afterTrigger.match(/do_template_setup\s*\(/i);
     if (!callMatch) return null;
 
-    // Start after the opening paren
     let pos = afterTrigger.indexOf('(', callMatch.index) + 1;
     const args = [];
 
     while (pos < afterTrigger.length && args.length < 7) {
-      // Skip whitespace, commas, newlines
+      // Skip whitespace and commas between args
       while (pos < afterTrigger.length && /[\s,]/.test(afterTrigger[pos])) pos++;
       if (pos >= afterTrigger.length) break;
 
@@ -286,22 +286,28 @@
         pos++; // skip opening quote
         let val = '';
         while (pos < afterTrigger.length) {
-          if (afterTrigger[pos] === "'" && afterTrigger[pos+1] === "'") {
-            val += "'"; pos += 2;                  // escaped quote
-          } else if (afterTrigger[pos] === "'") {
-            pos++; break;                           // closing quote
+          const ch = afterTrigger[pos];
+          if (ch === "'" && afterTrigger[pos+1] === "'") {
+            // Escaped quote: '' -> '
+            val += "'"; pos += 2;
+          } else if (ch === "'" && afterTrigger[pos+1] === '|' && afterTrigger[pos+2] === '|') {
+            // Oracle concatenation: 'text'||'more' - skip closing quote and ||
+            pos++; // skip quote
+            while (pos < afterTrigger.length && afterTrigger[pos] === '|') pos++; // skip ||
+            if (afterTrigger[pos] === "'") pos++; // skip next opening quote
+          } else if (ch === "'") {
+            pos++; break; // real end of string
           } else {
-            val += afterTrigger[pos++];
+            val += ch; pos++;
           }
         }
         args.push(val);
       } else {
-        // Skip unquoted token (shouldn't occur for our templates)
+        // Skip unquoted token
         while (pos < afterTrigger.length && afterTrigger[pos] !== ',' && afterTrigger[pos] !== ')') pos++;
       }
     }
 
-    // Parameter order: p_name(code), p_desc(name), p_from(sender), p_letter_desc(note), p_subject, p_case_comm(internalText), p_text(html)
     return {
       code:         args[0] || '',
       name:         args[1] || '',
@@ -400,10 +406,9 @@
     document.getElementById('meta-name').textContent =
       (setup.name || '') + (setup.code ? '  [' + setup.code + ']' : '');
 
-    // Sender: wrap raw sender string as a tag so evaluate handles ARG fallback
-    const senderWrapped = '{{' + setup.senderRaw + '}}';
+    // Sender: senderRaw is already a full {{ARG|...|ARG|...}} expression
     document.getElementById('meta-sender').innerHTML =
-      evaluate(decodeMail(senderWrapped), vars, unknowns, 'html');
+      evaluate(decodeMail(setup.senderRaw), vars, unknowns, 'html');
 
     document.getElementById('meta-note').textContent = setup.internalNote;
 
