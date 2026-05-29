@@ -525,88 +525,84 @@
   templateEl.addEventListener('input', () => update(true));
 
   // ─── RESIZABLE DIVIDERS ─────────────────────────────────────────────────────
-  const ws = document.querySelector('.workspace');
-  const previewFrame = document.getElementById('preview-frame');
-  let activeDivider = null;
-  let rowDragging   = false;
+  const ws          = document.querySelector('.workspace');
+  const pFrame      = document.getElementById('preview-frame');
+  const pPanel      = document.querySelector('.preview-panel');
+  let activeCol     = null;
+  let activeRow     = false;
 
   function getColSizes() {
     return getComputedStyle(ws).gridTemplateColumns.split(' ').map(c => parseFloat(c));
   }
-
-  function setColSizes(left, mid, right) {
-    ws.style.gridTemplateColumns = left + 'px 5px ' + mid + 'px 5px ' + right + 'px';
+  function setColSizes(l, m, r) {
+    ws.style.gridTemplateColumns = l + 'px 5px ' + m + 'px 5px ' + r + 'px';
   }
 
-  // Column dividers
-  ['div1','div2'].forEach(id => {
-    document.getElementById(id).addEventListener('mousedown', e => {
-      activeDivider = id;
-      document.getElementById(id).classList.add('dragging');
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      previewFrame.style.pointerEvents = 'none';
-      e.preventDefault();
-    });
+  document.getElementById('div1').addEventListener('mousedown', e => {
+    activeCol = 'div1';
+    e.currentTarget.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    pFrame.style.pointerEvents = 'none';
+    e.preventDefault();
   });
 
-  document.addEventListener('mousemove', e => {
-    if (!activeDivider) return;
-    const rect   = ws.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const cols   = getColSizes();
-    const left   = cols[0], mid = cols[2];
-    const totalW = rect.width - 10;
-
-    if (activeDivider === 'div1') {
-      const newLeft  = Math.max(80, Math.min(mouseX, totalW - mid - 80));
-      const newRight = Math.max(80, totalW - newLeft - mid);
-      setColSizes(newLeft, mid, newRight);
-    } else {
-      const newMid   = Math.max(80, Math.min(mouseX - left - 5, totalW - left - 80));
-      const newRight = Math.max(80, totalW - left - newMid);
-      setColSizes(left, newMid, newRight);
-    }
+  document.getElementById('div2').addEventListener('mousedown', e => {
+    activeCol = 'div2';
+    e.currentTarget.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    pFrame.style.pointerEvents = 'none';
+    e.preventDefault();
   });
-
-  document.addEventListener('mouseup', () => {
-    if (!activeDivider) return;
-    document.getElementById(activeDivider).classList.remove('dragging');
-    activeDivider = null;
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-    previewFrame.style.pointerEvents = '';
-  });
-
-  // Row divider (meta vs email preview)
-
-  const previewPanel = document.querySelector('.preview-panel');
 
   document.getElementById('div3').addEventListener('mousedown', e => {
-    rowDragging = true;
-    document.getElementById('div3').classList.add('dragging');
+    activeRow = true;
+    e.currentTarget.classList.add('dragging');
     document.body.style.cursor = 'row-resize';
     document.body.style.userSelect = 'none';
-    previewFrame.style.pointerEvents = 'none';
+    pFrame.style.pointerEvents = 'none';
     e.preventDefault();
   });
 
   document.addEventListener('mousemove', e => {
-    if (!rowDragging) return;
-    const contRect = previewPanel.getBoundingClientRect();
-    const newH = Math.max(40, Math.min(e.clientY - contRect.top, contRect.height - 80));
-    metaBlock.style.height    = newH + 'px';
-    metaBlock.style.maxHeight = newH + 'px';
-    metaBlock.style.flex      = 'none';
+    if (activeCol) {
+      const rect   = ws.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const cols   = getColSizes();
+      const left   = cols[0], mid = cols[2];
+      const totalW = rect.width - 10;
+      if (activeCol === 'div1') {
+        const newLeft  = Math.max(80, Math.min(mouseX, totalW - mid - 80));
+        const newRight = Math.max(80, totalW - newLeft - mid);
+        setColSizes(newLeft, mid, newRight);
+      } else {
+        const newMid   = Math.max(80, Math.min(mouseX - left - 5, totalW - left - 80));
+        const newRight = Math.max(80, totalW - left - newMid);
+        setColSizes(left, newMid, newRight);
+      }
+    }
+    if (activeRow) {
+      const contRect = pPanel.getBoundingClientRect();
+      const newH = Math.max(40, Math.min(e.clientY - contRect.top, contRect.height - 80));
+      metaBlock.style.height    = newH + 'px';
+      metaBlock.style.maxHeight = newH + 'px';
+      metaBlock.style.flex      = 'none';
+    }
   });
 
   document.addEventListener('mouseup', () => {
-    if (!rowDragging) return;
-    rowDragging = false;
-    document.getElementById('div3').classList.remove('dragging');
+    if (activeCol) {
+      document.getElementById(activeCol).classList.remove('dragging');
+      activeCol = null;
+    }
+    if (activeRow) {
+      document.getElementById('div3').classList.remove('dragging');
+      activeRow = false;
+    }
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
-    previewFrame.style.pointerEvents = '';
+    pFrame.style.pointerEvents = '';
   });
 
 </script>
