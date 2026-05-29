@@ -141,6 +141,12 @@
 
 <script src="variables.js"></script>
 <script>
+  // ─── GITHUB TEMPLATE LOADER CONFIG ──────────────────────────────────────────
+  // Set this to your GitHub raw content base URL
+  // Templates are fetched as: GITHUB_RAW_BASE + templateId + GITHUB_FILE_EXT
+  const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/tuehvass/email/main/templates/';
+  const GITHUB_FILE_EXT = '.sql';
+
   const templateEl = document.getElementById('template');
   const varList    = document.getElementById('var-list');
   const frame      = document.getElementById('preview-frame');
@@ -242,20 +248,44 @@
       const cmd   = parts[0].trim();
 
       // ── IF ──────────────────────────────────────────────────────────────────
+      // Supports: TEXT|value or ARG|VARNAME as branch values
+      // Format: {{IF|ARG|VAR|OP|TYPE|MATCHVAL|BRANCH_TYPE|BRANCH_VAL|BRANCH_TYPE|BRANCH_VAL}}
       if (cmd === 'IF' && parts[1] === 'ARG') {
         const varName  = parts[2];
         const op       = parts[3];
         const type     = parts[4];
         const matchVal = parts[5];
-        const trueVal  = parts[7] || '';
-        const falseVal = parts[9] || '';
-        const actual   = values[varName] !== undefined ? String(values[varName]) : '';
+        // parts[6] = true branch type (TEXT or ARG)
+        // parts[7] = true branch value
+        // parts[8] = false branch type (TEXT or ARG)
+        // parts[9] = false branch value
+        const trueBranchType  = parts[6] || 'TEXT';
+        const trueBranchVal   = parts[7] || '';
+        const falseBranchType = parts[8] || 'TEXT';
+        const falseBranchVal  = parts[9] || '';
+        const actual = values[varName] !== undefined ? String(values[varName]) : '';
         usedVars.add(varName);
-        const branch = evalCondition(actual, op, type, matchVal) ? trueVal : falseVal;
-        const notBranch = evalCondition(actual, op, type, matchVal) ? falseVal : trueVal;
-        result += evaluate(branch, values, unknowns, mode, usedVars);
-        // Also scan the non-taken branch for vars so they appear in the panel
-        evaluate(notBranch, values, new Set(), 'text', usedVars);
+
+        function resolveBranch(bType, bVal) {
+          // Use 'attr' mode if we're inside an HTML attribute so spans aren't injected
+          const branchMode = inAttr ? 'attr' : mode;
+          if (bType === 'ARG') {
+            const wrapped = '{{ARG|' + bVal + '}}';
+            return evaluate(wrapped, values, unknowns, branchMode, usedVars);
+          }
+          return evaluate(bVal, values, unknowns, branchMode, usedVars);
+        }
+
+        const taken    = evalCondition(actual, op, type, matchVal);
+        const branch    = taken ? resolveBranch(trueBranchType, trueBranchVal)
+                                : resolveBranch(falseBranchType, falseBranchVal);
+        // Scan non-taken branch for vars so they appear in panel
+        const notBType = taken ? falseBranchType : trueBranchType;
+        const notBVal  = taken ? falseBranchVal  : trueBranchVal;
+        if (notBType === 'ARG') evaluate('{{ARG|' + notBVal + '}}', values, new Set(), 'text', usedVars);
+        else evaluate(notBVal, values, new Set(), 'text', usedVars);
+
+        result += branch;
         pos += tagFull.length; continue;
       }
 
@@ -283,9 +313,9 @@
         allNames.forEach(n => usedVars.add(n));
         const label = '{{ARG|' + (allNames[0] || '?') + '}}';
         const isKnown = allNames.some(n => VAR_LOOKUP[n]);
-        if (inAttr)             result += label;
-        else if (mode==='html') result += isKnown ? yellowSpan(label) : redSpan(label);
-        else                    result += label;
+        if (inAttr || mode==='attr') result += label;
+        else if (mode==='html')      result += isKnown ? yellowSpan(label) : redSpan(label);
+        else                         result += label;
         pos += tagFull.length; continue;
       }
 
@@ -296,9 +326,9 @@
       if (values[name] !== undefined && values[name] !== '') { result += values[name]; pos += tagFull.length; continue; }
       if (!VAR_LOOKUP[name]) unknowns.add(name);
       const label2 = '{{' + name + '}}';
-      if (inAttr)             result += label2;
-      else if (mode==='html') result += VAR_LOOKUP[name] ? yellowSpan(label2) : redSpan(label2);
-      else                    result += label2;
+      if (inAttr || mode==='attr') result += label2;
+      else if (mode==='html')      result += VAR_LOOKUP[name] ? yellowSpan(label2) : redSpan(label2);
+      else                         result += label2;
       pos += tagFull.length;
     }
     return result;
@@ -401,7 +431,17 @@
     // Preserve values for ALL known vars even if not shown (so they survive re-renders)
     const allKnown = [...allVarNames].filter(n => VAR_LOOKUP[n]);
     const newVars = {};
-    allKnown.forEach(n => { newVars[n] = vars[n] !== undefined ? vars[n] : (VAR_LOOKUP[n].type === 'toggle' ? (VAR_LOOKUP[n].values ? VAR_LOOKUP[n].values[0] : '1') : ''); });
+    allKnown.forEach(n => {
+      if (vars[n] !== undefined) {
+        newVars[n] = vars[n];
+      } else if (VAR_LOOKUP[n].type === 'toggle') {
+        newVars[n] = VAR_LOOKUP[n].values ? VAR_LOOKUP[n].values[0] : '1';
+      } else if (VAR_LOOKUP[n].default !== undefined) {
+        newVars[n] = VAR_LOOKUP[n].default;
+      } else {
+        newVars[n] = '';
+      }
+    });
     vars = newVars;
 
     varList.innerHTML = '';
@@ -523,6 +563,32 @@
   frame.contentDocument.close();
 
   templateEl.addEventListener('input', () => update(true));
+
+  // ─── URL PARAMETER TEMPLATE LOADER ───────────────────────────────────────────
+  // Supports ?template=AS01 to auto-load a template from GitHub
+  (async function loadFromUrl() {
+    const params     = new URLSearchParams(window.location.search);
+    const templateId = params.get('template');
+    if (!templateId) return;
+
+    const url = GITHUB_RAW_BASE + templateId + GITHUB_FILE_EXT;
+
+    // Show loading state
+    templateEl.value = '-- Loading ' + templateId + ' from GitHub...';
+    templateEl.style.color = 'var(--text3)';
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      templateEl.value = text;
+      templateEl.style.color = '';
+      update(true);
+    } catch (err) {
+      templateEl.value = '-- Could not load template: ' + templateId + '\n-- URL: ' + url + '\n-- Error: ' + err.message;
+      templateEl.style.color = 'var(--danger)';
+    }
+  })();
 
   // ─── RESIZABLE DIVIDERS ─────────────────────────────────────────────────────
   const ws          = document.querySelector('.workspace');
