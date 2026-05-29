@@ -20,9 +20,9 @@
   header h1 { font-size: 15px; font-weight: 500; }
   header span { font-size: 13px; color: var(--text3); margin-left: auto; }
 
-  .workspace { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+  .workspace { display: grid; grid-template-columns: 1fr 5px 280px 5px 1fr; flex: 1; overflow: hidden; min-height: 0; }
   .panel { display: flex; flex-direction: column; overflow: hidden; min-height: 0; min-width: 80px; }
-  .divider { width: 5px; background: var(--border); cursor: col-resize; flex-shrink: 0; transition: background 0.15s; position: relative; }
+  .divider { background: var(--border); cursor: col-resize; transition: background 0.15s; position: relative; }
   .divider:hover, .divider.dragging { background: var(--accent); }
   .divider::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 1px; height: 24px; background: var(--text3); border-radius: 1px; }
   .panel-header { padding: 8px 14px; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
@@ -75,7 +75,7 @@
 
 <div class="workspace">
   <!-- LEFT: Template -->
-  <div class="panel" id="panel-left" style="flex:1;">
+  <div class="panel" id="panel-left">
     <div class="panel-header"><div class="dot"></div>Template</div>
     <div class="panel-body" style="padding:0;display:flex;flex-direction:column;min-height:0;">
       <textarea id="template" placeholder="Paste your mail template here..."></textarea>
@@ -85,7 +85,7 @@
   <div class="divider" id="div1"></div>
 
   <!-- MIDDLE: Variables -->
-  <div class="panel" id="panel-mid" style="width:280px;flex-shrink:0;">
+  <div class="panel" id="panel-mid">
     <div class="panel-header"><div class="dot" style="background:var(--success)"></div>Variables</div>
     <div class="panel-body">
       <div class="var-list" id="var-list">
@@ -97,7 +97,7 @@
   <div class="divider" id="div2"></div>
 
   <!-- RIGHT: Setup + Email preview -->
-  <div class="panel preview-panel" id="panel-right" style="flex:1;">
+  <div class="panel preview-panel" id="panel-right">
 
     <div class="meta-block" id="meta-block" style="display:none;">
       <div class="panel-header" style="border-bottom:1px solid var(--border);">
@@ -525,91 +525,95 @@
   templateEl.addEventListener('input', () => update(true));
 
   // ─── RESIZABLE DIVIDERS ─────────────────────────────────────────────────────
-  // Uses absolute mouse position relative to workspace/container to avoid
-  // reflow drift that causes jumping when using delta-based approach
+  // Grid-based resizing: update grid-template-columns directly on the workspace.
+  // This is the most reliable approach — no reflow drift, no jumping.
+  const workspace = document.querySelector('.workspace');
 
-  function makeColDraggable(dividerId, panelLeftId, panelMidId) {
-    // Handles the left divider: sets width of panelLeft, panelMid flexes, right flexes
-    const divider  = document.getElementById(dividerId);
-    const workspace = document.querySelector('.workspace');
-    if (!divider || !workspace) return;
-    let dragging = false;
+  let activeDivider = null;
 
-    divider.addEventListener('mousedown', e => {
-      dragging = true;
-      divider.classList.add('dragging');
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', e => {
-      if (!dragging) return;
-      const panelA = document.getElementById(panelLeftId);
-      const panelB = document.getElementById(panelMidId);
-      const wsRect = workspace.getBoundingClientRect();
-      const aRect  = panelA.getBoundingClientRect();
-
-      if (dividerId === 'div1') {
-        // Moving left divider: set panelLeft width absolutely
-        const newW = Math.max(80, e.clientX - wsRect.left);
-        panelA.style.width = newW + 'px';
-        panelA.style.flex  = 'none';
-      } else {
-        // Moving right divider: set panelMid width absolutely
-        const midLeft = panelB.getBoundingClientRect().left;
-        const newW = Math.max(80, e.clientX - midLeft);
-        panelB.style.width = newW + 'px';
-        panelB.style.flex  = 'none';
-      }
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (!dragging) return;
-      dragging = false;
-      divider.classList.remove('dragging');
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    });
+  function getColSizes() {
+    // Returns [leftPx, midPx, rightPx] from current grid
+    const cols = getComputedStyle(workspace).gridTemplateColumns.split(' ');
+    return cols.map(c => parseFloat(c));
   }
 
-  function makeRowDraggable(dividerId, panelTopId) {
-    const divider  = document.getElementById(dividerId);
-    const panelTop = document.getElementById(panelTopId);
-    const container = document.querySelector('.preview-panel');
-    if (!divider || !panelTop || !container) return;
-    let dragging = false;
-
-    divider.addEventListener('mousedown', e => {
-      dragging = true;
-      divider.classList.add('dragging');
-      document.body.style.cursor = 'row-resize';
-      document.body.style.userSelect = 'none';
-      e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', e => {
-      if (!dragging) return;
-      const contRect = container.getBoundingClientRect();
-      const newH = Math.max(40, e.clientY - contRect.top);
-      const maxH = contRect.height - 80;
-      panelTop.style.height   = Math.min(newH, maxH) + 'px';
-      panelTop.style.maxHeight = Math.min(newH, maxH) + 'px';
-      panelTop.style.flex     = 'none';
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (!dragging) return;
-      dragging = false;
-      divider.classList.remove('dragging');
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    });
+  function setColSizes(left, mid, right) {
+    workspace.style.gridTemplateColumns = `${left}px 5px ${mid}px 5px ${right}px`;
   }
 
-  makeColDraggable('div1', 'panel-left', 'panel-mid');
-  makeColDraggable('div2', 'panel-mid',  'panel-right');
-  makeRowDraggable('div3', 'meta-block');
+  document.getElementById('div1').addEventListener('mousedown', e => {
+    activeDivider = 'div1';
+    document.getElementById('div1').classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.getElementById('div2').addEventListener('mousedown', e => {
+    activeDivider = 'div2';
+    document.getElementById('div2').classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!activeDivider) return;
+    const wsRect = workspace.getBoundingClientRect();
+    const totalW = wsRect.width - 10; // subtract 2 dividers (5px each)
+    const mouseX = e.clientX - wsRect.left;
+    const cols   = getColSizes(); // [left, 5, mid, 5, right]
+    const left   = cols[0], mid = cols[2];
+
+    if (activeDivider === 'div1') {
+      const newLeft  = Math.max(80, Math.min(mouseX, totalW - mid - 80));
+      const newRight = totalW - newLeft - mid;
+      setColSizes(newLeft, mid, Math.max(80, newRight));
+    } else {
+      const div1Right = left + 5; // left panel + divider
+      const newMid    = Math.max(80, Math.min(mouseX - div1Right, totalW - left - 80));
+      const newRight  = Math.max(80, totalW - left - newMid);
+      setColSizes(left, newMid, newRight);
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!activeDivider) return;
+    document.getElementById(activeDivider).classList.remove('dragging');
+    activeDivider = null;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+
+  // Horizontal divider inside right panel (meta vs email)
+  const metaBlock = document.getElementById('meta-block');
+  const previewPanel = document.querySelector('.preview-panel');
+  let rowDragging = false;
+
+  document.getElementById('div3').addEventListener('mousedown', e => {
+    rowDragging = true;
+    document.getElementById('div3').classList.add('dragging');
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!rowDragging) return;
+    const contRect = previewPanel.getBoundingClientRect();
+    const newH = Math.max(40, Math.min(e.clientY - contRect.top, contRect.height - 80));
+    metaBlock.style.height    = newH + 'px';
+    metaBlock.style.maxHeight = newH + 'px';
+    metaBlock.style.flex      = 'none';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!rowDragging) return;
+    rowDragging = false;
+    document.getElementById('div3').classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
 
 </script>
 </body>
