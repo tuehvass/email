@@ -20,9 +20,11 @@
   header h1 { font-size: 15px; font-weight: 500; }
   header span { font-size: 13px; color: var(--text3); margin-left: auto; }
 
-  .workspace { display: grid; grid-template-columns: 1fr 280px 1fr; flex: 1; overflow: hidden; min-height: 0; }
-  .panel { display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; min-height: 0; }
-  .panel:last-child { border-right: none; }
+  .workspace { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+  .panel { display: flex; flex-direction: column; overflow: hidden; min-height: 0; min-width: 80px; }
+  .divider { width: 5px; background: var(--border); cursor: col-resize; flex-shrink: 0; transition: background 0.15s; position: relative; }
+  .divider:hover, .divider.dragging { background: var(--accent); }
+  .divider::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 1px; height: 24px; background: var(--text3); border-radius: 1px; }
   .panel-header { padding: 8px 14px; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .panel-header .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
   .panel-body { flex: 1; overflow-y: auto; padding: 14px; min-height: 0; }
@@ -73,15 +75,17 @@
 
 <div class="workspace">
   <!-- LEFT: Template -->
-  <div class="panel">
+  <div class="panel" id="panel-left" style="flex:1;">
     <div class="panel-header"><div class="dot"></div>Template</div>
     <div class="panel-body" style="padding:0;display:flex;flex-direction:column;min-height:0;">
       <textarea id="template" placeholder="Paste your mail template here..."></textarea>
     </div>
   </div>
 
+  <div class="divider" id="div1"></div>
+
   <!-- MIDDLE: Variables -->
-  <div class="panel">
+  <div class="panel" id="panel-mid" style="width:280px;flex-shrink:0;">
     <div class="panel-header"><div class="dot" style="background:var(--success)"></div>Variables</div>
     <div class="panel-body">
       <div class="var-list" id="var-list">
@@ -90,8 +94,10 @@
     </div>
   </div>
 
+  <div class="divider" id="div2"></div>
+
   <!-- RIGHT: Setup + Email preview -->
-  <div class="panel preview-panel">
+  <div class="panel preview-panel" id="panel-right" style="flex:1;">
 
     <div class="meta-block" id="meta-block" style="display:none;">
       <div class="panel-header" style="border-bottom:1px solid var(--border);">
@@ -120,6 +126,8 @@
         </div>
       </div>
     </div>
+
+    <div class="divider-h" id="div3" style="height:5px;cursor:row-resize;background:var(--border);flex-shrink:0;transition:background 0.15s;"></div>
 
     <div class="email-wrap">
       <div class="panel-header">
@@ -215,8 +223,10 @@
 
   // ─── MAIN RECURSIVE EVALUATOR ────────────────────────────────────────────────
   // mode 'html' → coloured spans for unknowns; 'text' → plain {{VAR}}
-  function evaluate(src, values, unknowns, mode) {
-    mode = mode || 'html';
+  // usedVars: Set that collects which vars were actually needed during this render
+  function evaluate(src, values, unknowns, mode, usedVars) {
+    mode     = mode     || 'html';
+    usedVars = usedVars || new Set();
     const tokens = tokenize(src);
     let result = '';
     let pos = 0;
@@ -224,7 +234,6 @@
     for (const token of tokens) {
       if (token.type === 'text') { result += token.value; pos += token.value.length; continue; }
 
-      // Detect if this tag sits inside an HTML attribute (e.g. href="...{{...}}...")
       const tagFull = '{{' + token.value + '}}';
       const tagPos  = src.indexOf(tagFull, pos);
       const inAttr  = (mode === 'html') && isInsideHtmlAttr(src, tagPos !== -1 ? tagPos : pos);
@@ -241,8 +250,9 @@
         const trueVal  = parts[7] || '';
         const falseVal = parts[9] || '';
         const actual   = values[varName] !== undefined ? String(values[varName]) : '';
-        const branch   = evalCondition(actual, op, type, matchVal) ? trueVal : falseVal;
-        result += evaluate(branch, values, unknowns, mode);
+        usedVars.add(varName);
+        const branch = evalCondition(actual, op, type, matchVal) ? trueVal : falseVal;
+        result += evaluate(branch, values, unknowns, mode, usedVars);
         pos += tagFull.length; continue;
       }
 
@@ -255,27 +265,37 @@
             const name = parts[k+1].trim();
             allNames.push(name);
             if (!VAR_LOOKUP[name]) unknowns.add(name);
-            if (resolved === null && values[name] !== undefined && values[name] !== '') resolved = values[name];
+            // Mark as used and stop walking chain once resolved
+            if (resolved === null) {
+              usedVars.add(name);
+              if (values[name] !== undefined && values[name] !== '') resolved = values[name];
+              // If not resolved yet, also mark next fallback as needed
+              // (so it shows up in the panel ready to be filled)
+            }
           }
         }
         if (resolved !== null) { result += resolved; pos += tagFull.length; continue; }
+        // Nothing resolved — mark first unresolved as used so it shows in panel
+        // Also mark the next fallback so user knows to fill it
+        allNames.forEach(n => usedVars.add(n));
         const label = '{{ARG|' + (allNames[0] || '?') + '}}';
         const isKnown = allNames.some(n => VAR_LOOKUP[n]);
-        if (inAttr)           result += label;  // plain text inside HTML attributes
+        if (inAttr)             result += label;
         else if (mode==='html') result += isKnown ? yellowSpan(label) : redSpan(label);
-        else                  result += label;
+        else                    result += label;
         pos += tagFull.length; continue;
       }
 
       // ── Simple {{VARNAME}} ───────────────────────────────────────────────────
       const name = cmd;
       if (['ARG','IF','TEXT','NUMBER'].includes(name)) { pos += tagFull.length; continue; }
+      usedVars.add(name);
       if (values[name] !== undefined && values[name] !== '') { result += values[name]; pos += tagFull.length; continue; }
       if (!VAR_LOOKUP[name]) unknowns.add(name);
       const label2 = '{{' + name + '}}';
-      if (inAttr)            result += label2;
+      if (inAttr)             result += label2;
       else if (mode==='html') result += VAR_LOOKUP[name] ? yellowSpan(label2) : redSpan(label2);
-      else                   result += label2;
+      else                    result += label2;
       pos += tagFull.length;
     }
     return result;
@@ -367,12 +387,18 @@
   }
 
   // ─── RENDER VARIABLES PANEL ──────────────────────────────────────────────────
-  function renderVars(allVarNames) {
-    const known   = [...allVarNames].filter(n => VAR_LOOKUP[n]);
-    const unknown = [...allVarNames].filter(n => !VAR_LOOKUP[n]);
+  // usedVars: Set of var names actually consumed in last render (dynamic filtering)
+  function renderVars(allVarNames, usedVars) {
+    // Only show vars that were actually used in the last render
+    // Fall back to allVarNames if usedVars not yet available (first render)
+    const activeNames = usedVars && usedVars.size > 0 ? usedVars : allVarNames;
+    const known   = [...activeNames].filter(n => VAR_LOOKUP[n]);
+    const unknown = [...activeNames].filter(n => !VAR_LOOKUP[n]);
 
+    // Preserve values for ALL known vars even if not shown (so they survive re-renders)
+    const allKnown = [...allVarNames].filter(n => VAR_LOOKUP[n]);
     const newVars = {};
-    known.forEach(n => { newVars[n] = vars[n] !== undefined ? vars[n] : (VAR_LOOKUP[n].type === 'toggle' ? '0' : ''); });
+    allKnown.forEach(n => { newVars[n] = vars[n] !== undefined ? vars[n] : (VAR_LOOKUP[n].type === 'toggle' ? (VAR_LOOKUP[n].values ? VAR_LOOKUP[n].values[0] : '1') : ''); });
     vars = newVars;
 
     varList.innerHTML = '';
@@ -422,7 +448,7 @@
   }
 
   // ─── RENDER META PANEL ───────────────────────────────────────────────────────
-  function renderMeta(setup, unknowns) {
+  function renderMeta(setup, unknowns, usedVars) {
     if (!setup || !setup.name) { metaBlock.style.display = 'none'; return; }
     metaBlock.style.display = 'block';
 
@@ -431,23 +457,23 @@
 
     // Sender: senderRaw is already a full {{ARG|...|ARG|...}} expression
     document.getElementById('meta-sender').innerHTML =
-      evaluate(decodeMail(setup.senderRaw), vars, unknowns, 'html');
+      evaluate(decodeMail(setup.senderRaw), vars, unknowns, 'html', usedVars);
 
     document.getElementById('meta-note').textContent = setup.internalNote;
 
     document.getElementById('meta-subject').innerHTML =
-      evaluate(decodeMail(setup.subjectRaw), vars, unknowns, 'html');
+      evaluate(decodeMail(setup.subjectRaw), vars, unknowns, 'html', usedVars);
 
     document.getElementById('meta-internal').innerHTML =
-      evaluate(decodeMail(setup.internalText), vars, unknowns, 'html');
+      evaluate(decodeMail(setup.internalText), vars, unknowns, 'html', usedVars);
   }
 
   // ─── RENDER EMAIL PREVIEW ────────────────────────────────────────────────────
-  function renderPreview(html, unknowns) {
+  function renderPreview(html, unknowns, usedVars) {
     const body = html.trim() ||
       '<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>';
     const decoded  = decodeMail(body);
-    const rendered = html.trim() ? evaluate(decoded, vars, unknowns, 'html') : body;
+    const rendered = html.trim() ? evaluate(decoded, vars, unknowns, 'html', usedVars) : body;
     ensureFonts(rendered);
     frame.contentDocument.open();
     frame.contentDocument.write(rendered);
@@ -458,14 +484,12 @@
   function update(rebuildVars) {
     const raw    = templateEl.value;
     const setup  = extractSetupArgs(raw);
-    // HTML body: prefer parsed arg[6], else fall back to splitting on '<!DOCTYPE
     let htmlBody = '';
     if (setup && setup.htmlBody) {
       htmlBody = setup.htmlBody;
     } else {
       const idx = raw.indexOf('<!DOCTYPE');
       if (idx !== -1) {
-        // Strip trailing '); if present
         htmlBody = raw.slice(idx).replace(/'\s*\)\s*;?\s*$/, '').trim();
       } else {
         htmlBody = raw;
@@ -473,11 +497,21 @@
     }
 
     const allVarNames = extractAllVarNames(raw);
-    if (rebuildVars) renderVars(allVarNames);
+
+    // First pass: dry-run evaluate to find which vars are actually used
+    // with current values, so we can show only relevant vars in panel
+    const usedVars   = new Set();
+    const dryUnknown = new Set();
+    const fullSrc    = (setup ? 
+      (setup.senderRaw + ' ' + setup.subjectRaw + ' ' + setup.internalText + ' ') : '')
+      + htmlBody;
+    if (fullSrc.trim()) evaluate(decodeMail(fullSrc), vars, dryUnknown, 'text', usedVars);
+
+    if (rebuildVars) renderVars(allVarNames, usedVars);
 
     const unknowns = new Set();
-    renderMeta(setup, unknowns);
-    renderPreview(htmlBody, unknowns);
+    renderMeta(setup, unknowns, usedVars);
+    renderPreview(htmlBody, unknowns, usedVars);
   }
 
   // Init iframe
@@ -486,6 +520,68 @@
   frame.contentDocument.close();
 
   templateEl.addEventListener('input', () => update(true));
+
+  // ─── RESIZABLE DIVIDERS ───────────────────────────────────────────────────────
+  function makeDraggable(dividerId, getPanelA, getPanelB, axis) {
+    const divider = document.getElementById(dividerId);
+    if (!divider) return;
+    let dragging = false, startPos = 0, startA = 0, startB = 0;
+
+    divider.addEventListener('mousedown', e => {
+      dragging = true;
+      startPos = axis === 'x' ? e.clientX : e.clientY;
+      const rectA = getPanelA().getBoundingClientRect();
+      const rectB = getPanelB().getBoundingClientRect();
+      startA = axis === 'x' ? rectA.width : rectA.height;
+      startB = axis === 'x' ? rectB.width : rectB.height;
+      divider.classList.add('dragging');
+      document.body.style.cursor = axis === 'x' ? 'col-resize' : 'row-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const delta = (axis === 'x' ? e.clientX : e.clientY) - startPos;
+      const newA = Math.max(80, startA + delta);
+      const newB = Math.max(80, startB - delta);
+      if (axis === 'x') {
+        getPanelA().style.width = newA + 'px';
+        getPanelA().style.flex = 'none';
+        getPanelB().style.width = newB + 'px';
+        getPanelB().style.flex = 'none';
+      } else {
+        getPanelA().style.height = newA + 'px';
+        getPanelA().style.flex = 'none';
+        getPanelB().style.height = newB + 'px';
+        getPanelB().style.flex = 'none';
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      divider.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+  }
+
+  makeDraggable('div1',
+    () => document.getElementById('panel-left'),
+    () => document.getElementById('panel-mid'),
+    'x');
+
+  makeDraggable('div2',
+    () => document.getElementById('panel-mid'),
+    () => document.getElementById('panel-right'),
+    'x');
+
+  makeDraggable('div3',
+    () => document.getElementById('meta-block'),
+    () => document.querySelector('.email-wrap'),
+    'y');
+
 </script>
 </body>
 </html>
