@@ -525,51 +525,46 @@
   templateEl.addEventListener('input', () => update(true));
 
   // ─── RESIZABLE DIVIDERS ─────────────────────────────────────────────────────
-  // Grid-based resizing: update grid-template-columns directly on the workspace.
-  // This is the most reliable approach — no reflow drift, no jumping.
-  const workspace = document.querySelector('.workspace');
-
+  const ws = document.querySelector('.workspace');
+  const previewFrame = document.getElementById('preview-frame');
   let activeDivider = null;
+  let rowDragging   = false;
 
   function getColSizes() {
-    // Returns [leftPx, midPx, rightPx] from current grid
-    const cols = getComputedStyle(workspace).gridTemplateColumns.split(' ');
-    return cols.map(c => parseFloat(c));
+    return getComputedStyle(ws).gridTemplateColumns.split(' ').map(c => parseFloat(c));
   }
 
   function setColSizes(left, mid, right) {
-    workspace.style.gridTemplateColumns = `${left}px 5px ${mid}px 5px ${right}px`;
+    ws.style.gridTemplateColumns = left + 'px 5px ' + mid + 'px 5px ' + right + 'px';
   }
 
-  function startDrag(id, e) {
-    activeDivider = id;
-    document.getElementById(id).classList.add('dragging');
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    // Disable pointer events on iframe so mousemove isn't swallowed
-    frame.style.pointerEvents = 'none';
-    e.preventDefault();
-  }
-
-  document.getElementById('div1').addEventListener('mousedown', e => startDrag('div1', e));
-  document.getElementById('div2').addEventListener('mousedown', e => startDrag('div2', e));
+  // Column dividers
+  ['div1','div2'].forEach(id => {
+    document.getElementById(id).addEventListener('mousedown', e => {
+      activeDivider = id;
+      document.getElementById(id).classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      previewFrame.style.pointerEvents = 'none';
+      e.preventDefault();
+    });
+  });
 
   document.addEventListener('mousemove', e => {
     if (!activeDivider) return;
-    const wsRect = workspace.getBoundingClientRect();
-    const totalW = wsRect.width - 10; // subtract 2 dividers (5px each)
-    const mouseX = e.clientX - wsRect.left;
-    const cols   = getColSizes(); // [left, 5, mid, 5, right]
+    const rect   = ws.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const cols   = getColSizes();
     const left   = cols[0], mid = cols[2];
+    const totalW = rect.width - 10;
 
     if (activeDivider === 'div1') {
       const newLeft  = Math.max(80, Math.min(mouseX, totalW - mid - 80));
-      const newRight = totalW - newLeft - mid;
-      setColSizes(newLeft, mid, Math.max(80, newRight));
+      const newRight = Math.max(80, totalW - newLeft - mid);
+      setColSizes(newLeft, mid, newRight);
     } else {
-      const div1Right = left + 5; // left panel + divider
-      const newMid    = Math.max(80, Math.min(mouseX - div1Right, totalW - left - 80));
-      const newRight  = Math.max(80, totalW - left - newMid);
+      const newMid   = Math.max(80, Math.min(mouseX - left - 5, totalW - left - 80));
+      const newRight = Math.max(80, totalW - left - newMid);
       setColSizes(left, newMid, newRight);
     }
   });
@@ -580,20 +575,19 @@
     activeDivider = null;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
-    frame.style.pointerEvents = '';
+    previewFrame.style.pointerEvents = '';
   });
 
-  // Horizontal divider inside right panel (meta vs email)
-  const metaBlock = document.getElementById('meta-block');
+  // Row divider (meta vs email preview)
+  const metaBlock   = document.getElementById('meta-block');
   const previewPanel = document.querySelector('.preview-panel');
-  let rowDragging = false;
 
   document.getElementById('div3').addEventListener('mousedown', e => {
     rowDragging = true;
     document.getElementById('div3').classList.add('dragging');
     document.body.style.cursor = 'row-resize';
     document.body.style.userSelect = 'none';
-    frame.style.pointerEvents = 'none';
+    previewFrame.style.pointerEvents = 'none';
     e.preventDefault();
   });
 
@@ -612,7 +606,7 @@
     document.getElementById('div3').classList.remove('dragging');
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
-    frame.style.pointerEvents = '';
+    previewFrame.style.pointerEvents = '';
   });
 
 </script>
