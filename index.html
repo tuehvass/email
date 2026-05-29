@@ -30,7 +30,6 @@
   textarea#template { width: 100%; height: 100%; background: var(--bg); border: none; outline: none; color: var(--text); font-family: var(--mono); font-size: 12px; line-height: 1.7; resize: none; caret-color: var(--accent2); padding: 14px; display: block; }
   textarea#template::placeholder { color: var(--text3); }
 
-  /* Variables panel */
   .var-list { display: flex; flex-direction: column; gap: 12px; }
   .var-item label { display: flex; align-items: baseline; gap: 6px; font-size: 12px; color: var(--text2); margin-bottom: 5px; font-family: var(--mono); letter-spacing: 0.03em; font-weight: 500; }
   .var-item label .desc { font-size: 10px; color: var(--text3); font-weight: 400; }
@@ -45,23 +44,20 @@
   .unknown-vars .title { font-size: 11px; color: var(--danger); font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
   .unknown-var-item { font-size: 12px; font-family: var(--mono); color: var(--danger); padding: 2px 0; }
 
-  /* Right preview panel */
+  /* Right panel: meta on top, email below */
   .preview-panel { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 
-  /* Metadata block */
-  .meta-block { flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--surface); overflow-y: auto; max-height: 45%; }
-  .meta-block-inner { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .meta-block { flex-shrink: 0; border-bottom: 1px solid var(--border); overflow-y: auto; max-height: 42%; }
+  .meta-rows { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
   .meta-row { display: flex; flex-direction: column; gap: 3px; }
   .meta-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 500; }
   .meta-value { font-size: 13px; color: var(--text2); font-family: var(--mono); word-break: break-all; }
-  .meta-value.big { font-size: 14px; color: var(--text); font-weight: 500; font-family: var(--sans); }
-  .meta-value.internal { font-size: 13px; color: var(--text2); font-family: var(--sans); line-height: 1.6; white-space: pre-wrap; }
-  .meta-hidden { display: none; }
+  .meta-value.name { font-size: 14px; color: var(--text); font-weight: 600; font-family: var(--sans); }
+  .meta-value.note { color: var(--text3); font-style: italic; font-family: var(--sans); }
+  .meta-value.prose { font-family: var(--sans); line-height: 1.6; color: var(--text2); }
 
-  /* Email preview iframe */
-  .email-preview-wrap { flex: 1; overflow: hidden; min-height: 0; display: flex; flex-direction: column; }
-  .email-preview-header { padding: 8px 14px; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  iframe#preview-frame { width: 100%; height: 100%; border: none; background: #fff; }
+  .email-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+  iframe#preview-frame { width: 100%; height: 100%; border: none; background: #fff; flex: 1; }
 
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -76,10 +72,10 @@
 </header>
 
 <div class="workspace">
-  <!-- LEFT: Template input -->
+  <!-- LEFT: Template -->
   <div class="panel">
     <div class="panel-header"><div class="dot"></div>Template</div>
-    <div class="panel-body" style="padding:0; display:flex; flex-direction:column; min-height:0;">
+    <div class="panel-body" style="padding:0;display:flex;flex-direction:column;min-height:0;">
       <textarea id="template" placeholder="Paste your mail template here..."></textarea>
     </div>
   </div>
@@ -94,39 +90,41 @@
     </div>
   </div>
 
-  <!-- RIGHT: Meta + Email preview -->
+  <!-- RIGHT: Setup + Email preview -->
   <div class="panel preview-panel">
 
-    <!-- Metadata section -->
     <div class="meta-block" id="meta-block" style="display:none;">
-      <div class="panel-header" style="border-bottom:1px solid var(--border);"><div class="dot" style="background:var(--warn)"></div>Template Setup</div>
-      <div class="meta-block-inner">
-        <div class="meta-row" id="meta-name-row">
+      <div class="panel-header" style="border-bottom:1px solid var(--border);">
+        <div class="dot" style="background:var(--warn)"></div>Template Setup
+      </div>
+      <div class="meta-rows">
+        <div class="meta-row">
           <div class="meta-label">Template Name</div>
-          <div class="meta-value big" id="meta-name"></div>
+          <div class="meta-value name" id="meta-name"></div>
         </div>
-        <div class="meta-row" id="meta-sender-row">
+        <div class="meta-row">
           <div class="meta-label">Sender Email</div>
           <div class="meta-value" id="meta-sender"></div>
         </div>
-        <div class="meta-row" id="meta-note-row">
+        <div class="meta-row">
           <div class="meta-label">Internal Note</div>
-          <div class="meta-value" id="meta-note" style="color:var(--text3);font-style:italic;"></div>
+          <div class="meta-value note" id="meta-note"></div>
         </div>
-        <div class="meta-row" id="meta-subject-row">
+        <div class="meta-row">
           <div class="meta-label">Email Subject</div>
-          <div class="meta-value" id="meta-subject"></div>
+          <div class="meta-value prose" id="meta-subject"></div>
         </div>
-        <div class="meta-row" id="meta-internal-row">
-          <div class="meta-label">Internal Text Preview</div>
-          <div class="meta-value internal" id="meta-internal"></div>
+        <div class="meta-row">
+          <div class="meta-label">Internal Text</div>
+          <div class="meta-value prose" id="meta-internal"></div>
         </div>
       </div>
     </div>
 
-    <!-- Email preview -->
-    <div class="email-preview-wrap">
-      <div class="email-preview-header"><div class="dot" style="background:var(--accent2)"></div>Email Preview</div>
+    <div class="email-wrap">
+      <div class="panel-header">
+        <div class="dot" style="background:var(--accent2)"></div>Email Preview
+      </div>
       <iframe id="preview-frame" sandbox="allow-same-origin"></iframe>
     </div>
 
@@ -135,10 +133,10 @@
 
 <script src="variables.js"></script>
 <script>
-  const templateEl  = document.getElementById('template');
-  const varList     = document.getElementById('var-list');
-  const frame       = document.getElementById('preview-frame');
-  const metaBlock   = document.getElementById('meta-block');
+  const templateEl = document.getElementById('template');
+  const varList    = document.getElementById('var-list');
+  const frame      = document.getElementById('preview-frame');
+  const metaBlock  = document.getElementById('meta-block');
   let vars = {};
 
   const VAR_LOOKUP = {};
@@ -164,26 +162,18 @@
     return tokens;
   }
 
-  // ─── SPLIT ON | RESPECTING NESTING AND HTML QUOTES ─────────────────────────
+  // ─── SPLIT ON | RESPECTING NESTING AND HTML QUOTES ───────────────────────────
   function splitParts(inner) {
     const parts = [];
     let current = '', depth = 0, i = 0, inQuote = null;
     while (i < inner.length) {
       const ch = inner[i];
-      // Track HTML attribute quotes (only when not inside {{ }})
-      if (depth === 0 && (ch === '"' || ch === "'") && inQuote === null) {
-        inQuote = ch; current += ch; i++; continue;
-      }
-      if (depth === 0 && inQuote && ch === inQuote) {
-        inQuote = null; current += ch; i++; continue;
-      }
-      // Inside a quoted attribute — pass through everything
-      if (inQuote) { current += ch; i++; continue; }
-      // Nesting
+      if (depth === 0 && !inQuote && (ch === '"' || ch === "'")) { inQuote = ch; current += ch; i++; continue; }
+      if (depth === 0 && inQuote && ch === inQuote)               { inQuote = null; current += ch; i++; continue; }
+      if (inQuote)                                                 { current += ch; i++; continue; }
       if (ch === '{' && inner[i+1] === '{') { depth++; current += '{{'; i += 2; continue; }
       if (ch === '}' && inner[i+1] === '}') { depth--; current += '}}'; i += 2; continue; }
-      // Split on | only at depth 0 and outside quotes
-      if (ch === '|' && depth === 0) { parts.push(current); current = ''; i++; continue; }
+      if (ch === '|' && depth === 0)        { parts.push(current); current = ''; i++; continue; }
       current += ch; i++;
     }
     parts.push(current);
@@ -202,19 +192,19 @@
     const a = type === 'NUMBER' ? parseFloat(actual) : actual.trim();
     const b = type === 'NUMBER' ? parseFloat(matchVal) : matchVal.trim();
     switch(op) {
-      case '=':  return a == b;
-      case '!=': return a != b;
-      case '>':  return a > b;
-      case '<':  return a < b;
-      case '>=': return a >= b;
-      case '<=': return a <= b;
+      case '=':  return a == b;  case '!=': return a != b;
+      case '>':  return a > b;   case '<':  return a < b;
+      case '>=': return a >= b;  case '<=': return a <= b;
       default:   return false;
     }
   }
 
+  // ─── UNKNOWN VAR SPAN HELPERS ────────────────────────────────────────────────
+  function redSpan(label)    { return `<span style="background:#7f1d1d;color:#fca5a5;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">${label}</span>`; }
+  function yellowSpan(label) { return `<span style="background:#78350f;color:#fcd34d;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">${label}</span>`; }
+
   // ─── MAIN RECURSIVE EVALUATOR ────────────────────────────────────────────────
-  // mode: 'html' = render unknown as red/yellow spans
-  //       'text' = render unknown as plain {{VAR}} for meta fields
+  // mode 'html' → coloured spans for unknowns; 'text' → plain {{VAR}}
   function evaluate(src, values, unknowns, mode) {
     mode = mode || 'html';
     const tokens = tokenize(src);
@@ -224,9 +214,9 @@
       if (token.type === 'text') { result += token.value; continue; }
 
       const parts = splitParts(token.value);
-      const cmd = parts[0].trim();
+      const cmd   = parts[0].trim();
 
-      // IF|ARG|VARNAME|OP|TYPE|MATCHVAL|TEXT|TRUEVAL|TEXT|FALSEVAL
+      // ── IF ──────────────────────────────────────────────────────────────────
       if (cmd === 'IF' && parts[1] === 'ARG') {
         const varName  = parts[2];
         const op       = parts[3];
@@ -240,91 +230,78 @@
         continue;
       }
 
-      // ARG|VAR1|ARG|VAR2 fallback chain
+      // ── ARG fallback chain ───────────────────────────────────────────────────
       if (cmd === 'ARG') {
         let resolved = null;
-        let allNames = [];
-        for (let k = 0; k < parts.length - 1; k += 2) {
+        const allNames = [];
+        for (let k = 0; k + 1 < parts.length; k += 2) {
           if (parts[k].trim() === 'ARG') {
             const name = parts[k+1].trim();
             allNames.push(name);
             if (!VAR_LOOKUP[name]) unknowns.add(name);
-            if (resolved === null && values[name] !== undefined && values[name] !== '') {
-              resolved = values[name];
-            }
+            if (resolved === null && values[name] !== undefined && values[name] !== '') resolved = values[name];
           }
         }
         if (resolved !== null) { result += resolved; continue; }
-
-        // Not resolved — check if known but empty, or unknown
-        const firstName = allNames[0] || '';
+        const label = `{{ARG|${allNames[0] || '?'}}}`;
         const isKnown = allNames.some(n => VAR_LOOKUP[n]);
-        if (mode === 'html') {
-          if (isKnown) {
-            // Known but not filled → yellow
-            result += `<span style="background:#78350f;color:#fcd34d;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">{{ARG|${firstName}}}</span>`;
-          } else {
-            // Not in variable list → red
-            result += `<span style="background:#7f1d1d;color:#fca5a5;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">{{ARG|${firstName}}}</span>`;
-          }
-        } else {
-          result += `{{ARG|${firstName}}}`;
-        }
+        if (mode === 'html') result += isKnown ? yellowSpan(label) : redSpan(label);
+        else                 result += label;
         continue;
       }
 
-      // Simple {{VARNAME}}
+      // ── Simple {{VARNAME}} ───────────────────────────────────────────────────
       const name = cmd;
-      if (name === 'ARG' || name === 'IF' || name === 'TEXT' || name === 'NUMBER') continue;
+      if (['ARG','IF','TEXT','NUMBER'].includes(name)) continue;
       if (values[name] !== undefined && values[name] !== '') { result += values[name]; continue; }
       if (!VAR_LOOKUP[name]) unknowns.add(name);
-      if (mode === 'html') {
-        const isKnown = !!VAR_LOOKUP[name];
-        if (isKnown) {
-          result += `<span style="background:#78350f;color:#fcd34d;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">{{${name}}}</span>`;
-        } else {
-          result += `<span style="background:#7f1d1d;color:#fca5a5;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;">{{${name}}}</span>`;
-        }
-      } else {
-        result += `{{${name}}}`;
-      }
+      const label2 = `{{${name}}}`;
+      if (mode === 'html') result += VAR_LOOKUP[name] ? yellowSpan(label2) : redSpan(label2);
+      else                 result += label2;
     }
     return result;
   }
 
-  // ─── PARSE do_template_setup HEADER ──────────────────────────────────────────
-  // Splits the raw string arguments from do_template_setup(...) correctly,
-  // handling single-quoted strings and nested content
-  function parseTemplateSetup(src) {
-    const match = src.match(/do_template_setup\s*\(([\s\S]*?)(?:,\s*'<!DOCTYPE)/i);
-    if (!match) return null;
+  // ─── PARSE do_template_setup ARGUMENTS ───────────────────────────────────────
+  // Extracts single-quoted string args, handling '' escaping inside strings
+  function extractSetupArgs(src) {
+    // Find "-- Make template setup" trigger (case-insensitive, may have spaces)
+    const triggerMatch = src.match(/--\s*Make\s+template\s+setup/i);
+    if (!triggerMatch) return null;
 
-    const argStr = match[1];
-    // Extract single-quoted string arguments, handling '' escaping inside
+    const afterTrigger = src.slice(triggerMatch.index);
+    const callMatch = afterTrigger.match(/do_template_setup\s*\(/i);
+    if (!callMatch) return null;
+
+    // Start after the opening paren
+    let pos = afterTrigger.indexOf('(', callMatch.index) + 1;
     const args = [];
-    let i = 0;
-    while (i < argStr.length) {
-      // Skip whitespace and commas
-      while (i < argStr.length && (argStr[i] === ',' || argStr[i] === ' ' || argStr[i] === '\n' || argStr[i] === '\r')) i++;
-      if (i >= argStr.length) break;
-      if (argStr[i] === "'") {
-        i++; // skip opening quote
+
+    while (pos < afterTrigger.length && args.length < 7) {
+      // Skip whitespace, commas, newlines
+      while (pos < afterTrigger.length && /[\s,]/.test(afterTrigger[pos])) pos++;
+      if (pos >= afterTrigger.length) break;
+
+      if (afterTrigger[pos] === "'") {
+        pos++; // skip opening quote
         let val = '';
-        while (i < argStr.length) {
-          if (argStr[i] === "'" && argStr[i+1] === "'") { val += "'"; i += 2; }
-          else if (argStr[i] === "'") { i++; break; }
-          else { val += argStr[i]; i++; }
+        while (pos < afterTrigger.length) {
+          if (afterTrigger[pos] === "'" && afterTrigger[pos+1] === "'") {
+            val += "'"; pos += 2;                  // escaped quote
+          } else if (afterTrigger[pos] === "'") {
+            pos++; break;                           // closing quote
+          } else {
+            val += afterTrigger[pos++];
+          }
         }
         args.push(val);
       } else {
-        // unquoted arg (e.g. number) — skip
-        while (i < argStr.length && argStr[i] !== ',') i++;
+        // Skip unquoted token (shouldn't occur for our templates)
+        while (pos < afterTrigger.length && afterTrigger[pos] !== ',' && afterTrigger[pos] !== ')') pos++;
       }
     }
 
-    // args[0] = template code, args[1] = template name,
-    // args[2] = sender email (ARG expression), args[3] = internal note,
-    // args[4] = subject, args[5] = internal text
+    // Parameter order: p_name(code), p_desc(name), p_from(sender), p_letter_desc(note), p_subject, p_case_comm(internalText), p_text(html)
     return {
       code:         args[0] || '',
       name:         args[1] || '',
@@ -332,25 +309,11 @@
       internalNote: args[3] || '',
       subjectRaw:   args[4] || '',
       internalText: args[5] || '',
+      htmlBody:     args[6] || '',
     };
   }
 
-  // ─── SPLIT HEADER FROM HTML BODY ─────────────────────────────────────────────
-  function splitTemplate(raw) {
-    const htmlIdx = raw.indexOf("'<!DOCTYPE");
-    if (raw.trimStart().startsWith('--') && htmlIdx !== -1) {
-      const header = raw.slice(0, htmlIdx);
-      // Find the actual <!DOCTYPE start
-      const doctypeIdx = raw.indexOf('<!DOCTYPE', htmlIdx);
-      const html = doctypeIdx !== -1 ? raw.slice(doctypeIdx) : '';
-      // Strip trailing '); or similar
-      const cleanHtml = html.replace(/'\s*\)\s*;?\s*$/, '').trim();
-      return { header, html: cleanHtml };
-    }
-    return { header: null, html: raw };
-  }
-
-  // ─── EXTRACT ALL VAR NAMES ───────────────────────────────────────────────────
+  // ─── EXTRACT ALL VAR NAMES FROM RAW SOURCE ───────────────────────────────────
   function extractAllVarNames(src) {
     const found = new Set();
     const re  = /\{\{(?:IF\|ARG\||ARG\|)([A-Z0-9_]+)/g;
@@ -367,15 +330,14 @@
   const loadedFonts = new Set();
   function ensureFonts(html) {
     ['Quicksand','Roboto','Open Sans','Lato','Montserrat','Oswald','Raleway','Nunito','Poppins'].forEach(font => {
-      if (html.includes(font) && !loadedFonts.has(font)) {
-        const href = 'https://fonts.googleapis.com/css2?family=' + font.replace(/ /g,'+') + ':wght@400;500;600&display=swap';
-        [document, frame.contentDocument].forEach(doc => {
-          if (!doc) return;
-          const l = doc.createElement('link'); l.rel = 'stylesheet'; l.href = href;
-          doc.head.appendChild(l);
-        });
-        loadedFonts.add(font);
-      }
+      if (!html.includes(font) || loadedFonts.has(font)) return;
+      const href = 'https://fonts.googleapis.com/css2?family=' + font.replace(/ /g,'+') + ':wght@400;500;600&display=swap';
+      [document, frame.contentDocument].forEach(doc => {
+        if (!doc) return;
+        const l = doc.createElement('link'); l.rel = 'stylesheet'; l.href = href;
+        doc.head.appendChild(l);
+      });
+      loadedFonts.add(font);
     });
   }
 
@@ -398,26 +360,24 @@
       const def  = VAR_LOOKUP[name];
       const item = document.createElement('div');
       item.className = 'var-item';
-      const labelHtml = `<label>${name} <span class="desc">${def.description}</span></label>`;
+      const lbl = `<label>${name} <span class="desc">${def.description}</span></label>`;
 
       if (def.type === 'toggle') {
-        item.innerHTML = labelHtml + `<div class="var-btn-group">
-          <button class="var-btn ${vars[name] === '1' ? 'active' : ''}" data-var="${name}" data-val="1">1</button>
-          <button class="var-btn ${vars[name] !== '1' ? 'active' : ''}" data-var="${name}" data-val="0">Other</button>
+        item.innerHTML = lbl + `<div class="var-btn-group">
+          <button class="var-btn ${vars[name]==='1'?'active':''}" data-var="${name}" data-val="1">1</button>
+          <button class="var-btn ${vars[name]!=='1'?'active':''}" data-var="${name}" data-val="0">Other</button>
         </div>`;
-        item.querySelectorAll('.var-btn').forEach(btn => {
-          btn.addEventListener('click', e => {
-            vars[name] = e.target.dataset.val;
-            item.querySelectorAll('.var-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            update(false);
-          });
-        });
+        item.querySelectorAll('.var-btn').forEach(btn => btn.addEventListener('click', e => {
+          vars[name] = e.target.dataset.val;
+          item.querySelectorAll('.var-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          update(false);
+        }));
       } else if (def.type === 'number') {
-        item.innerHTML = labelHtml + `<input class="var-input" type="number" step="1" data-var="${name}" value="${vars[name]}" placeholder="0">`;
+        item.innerHTML = lbl + `<input class="var-input" type="number" step="1" data-var="${name}" value="${vars[name]}" placeholder="0">`;
         item.querySelector('input').addEventListener('input', e => { vars[name] = e.target.value; update(false); });
       } else {
-        item.innerHTML = labelHtml + `<input class="var-input" type="text" data-var="${name}" value="${vars[name]}" placeholder="value...">`;
+        item.innerHTML = lbl + `<input class="var-input" type="text" data-var="${name}" value="${vars[name]}" placeholder="value...">`;
         item.querySelector('input').addEventListener('input', e => { vars[name] = e.target.value; update(false); });
       }
       varList.appendChild(item);
@@ -434,35 +394,32 @@
 
   // ─── RENDER META PANEL ───────────────────────────────────────────────────────
   function renderMeta(setup, unknowns) {
-    if (!setup) { metaBlock.style.display = 'none'; return; }
+    if (!setup || !setup.name) { metaBlock.style.display = 'none'; return; }
     metaBlock.style.display = 'block';
 
-    document.getElementById('meta-name').textContent = setup.name + (setup.code ? '  [' + setup.code + ']' : '');
+    document.getElementById('meta-name').textContent =
+      (setup.name || '') + (setup.code ? '  [' + setup.code + ']' : '');
 
-    // Sender — wrap in {{ARG|...}} so evaluator handles fallback
-    const senderExpr = '{{ARG|' + setup.senderRaw.replace(/\|ARG\|/g, '|ARG|') + '}}';
-    const senderResolved = evaluate('{{' + setup.senderRaw + '}}', vars, unknowns, 'text');
-    document.getElementById('meta-sender').textContent = senderResolved || setup.senderRaw;
+    // Sender: wrap raw sender string as a tag so evaluate handles ARG fallback
+    const senderWrapped = '{{' + setup.senderRaw + '}}';
+    document.getElementById('meta-sender').innerHTML =
+      evaluate(decodeMail(senderWrapped), vars, unknowns, 'html');
 
     document.getElementById('meta-note').textContent = setup.internalNote;
 
-    const subjectResolved = evaluate(setup.subjectRaw, vars, unknowns, 'html');
-    document.getElementById('meta-subject').innerHTML = subjectResolved;
+    document.getElementById('meta-subject').innerHTML =
+      evaluate(decodeMail(setup.subjectRaw), vars, unknowns, 'html');
 
-    const internalResolved = evaluate(setup.internalText, vars, unknowns, 'html');
-    document.getElementById('meta-internal').innerHTML = internalResolved;
+    document.getElementById('meta-internal').innerHTML =
+      evaluate(decodeMail(setup.internalText), vars, unknowns, 'html');
   }
 
   // ─── RENDER EMAIL PREVIEW ────────────────────────────────────────────────────
   function renderPreview(html, unknowns) {
-    if (!html.trim()) {
-      frame.contentDocument.open();
-      frame.contentDocument.write('<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>');
-      frame.contentDocument.close();
-      return;
-    }
-    const decoded  = decodeMail(html);
-    const rendered = evaluate(decoded, vars, unknowns, 'html');
+    const body = html.trim() ||
+      '<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>';
+    const decoded  = decodeMail(body);
+    const rendered = html.trim() ? evaluate(decoded, vars, unknowns, 'html') : body;
     ensureFonts(rendered);
     frame.contentDocument.open();
     frame.contentDocument.write(rendered);
@@ -471,20 +428,31 @@
 
   // ─── MAIN UPDATE ─────────────────────────────────────────────────────────────
   function update(rebuildVars) {
-    const raw = templateEl.value;
-    const { header, html } = splitTemplate(raw);
-    const setup = header ? parseTemplateSetup(header) : null;
+    const raw    = templateEl.value;
+    const setup  = extractSetupArgs(raw);
+    // HTML body: prefer parsed arg[6], else fall back to splitting on '<!DOCTYPE
+    let htmlBody = '';
+    if (setup && setup.htmlBody) {
+      htmlBody = setup.htmlBody;
+    } else {
+      const idx = raw.indexOf('<!DOCTYPE');
+      if (idx !== -1) {
+        // Strip trailing '); if present
+        htmlBody = raw.slice(idx).replace(/'\s*\)\s*;?\s*$/, '').trim();
+      } else {
+        htmlBody = raw;
+      }
+    }
 
-    // Collect all var names from entire raw input
     const allVarNames = extractAllVarNames(raw);
     if (rebuildVars) renderVars(allVarNames);
 
     const unknowns = new Set();
     renderMeta(setup, unknowns);
-    renderPreview(html, unknowns);
+    renderPreview(htmlBody, unknowns);
   }
 
-  // Init
+  // Init iframe
   frame.contentDocument.open();
   frame.contentDocument.write('<p style="color:#aaa;font-style:italic;padding:20px;font-family:Arial">Preview will appear here...</p>');
   frame.contentDocument.close();
