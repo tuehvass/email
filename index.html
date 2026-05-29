@@ -388,10 +388,14 @@
       const lbl = `<label>${name} <span class="desc">${def.description}</span></label>`;
 
       if (def.type === 'toggle') {
-        item.innerHTML = lbl + `<div class="var-btn-group">
-          <button class="var-btn ${vars[name]==='1'?'active':''}" data-var="${name}" data-val="1">1</button>
-          <button class="var-btn ${vars[name]!=='1'?'active':''}" data-var="${name}" data-val="0">Other</button>
-        </div>`;
+        // Use values array from definition, fallback to ['1', 'Other'] if not specified
+        const toggleVals = def.values || ['1', 'Other'];
+        // Default to first value if current value not in list
+        if (!toggleVals.includes(vars[name])) vars[name] = toggleVals[0];
+        const btns = toggleVals.map(v =>
+          `<button class="var-btn ${vars[name]===v?'active':''}" data-var="${name}" data-val="${v}">${v}</button>`
+        ).join('');
+        item.innerHTML = lbl + `<div class="var-btn-group">${btns}</div>`;
         item.querySelectorAll('.var-btn').forEach(btn => btn.addEventListener('click', e => {
           vars[name] = e.target.dataset.val;
           item.querySelectorAll('.var-btn').forEach(b => b.classList.remove('active'));
